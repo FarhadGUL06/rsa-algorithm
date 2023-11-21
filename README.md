@@ -77,4 +77,17 @@ input10.txt: OK -> 0.78
 Testing huge input
 input_huge.txt: OK -> 40.19
 
-## 
+## For run_mpi: (testat de Edi)
+input00.txt: OK -> 0.30
+input01.txt: OK -> 0.26
+input02.txt: OK -> 0.31
+input03.txt: OK -> 0.26
+input04.txt: OK -> 0.26
+input05.txt: OK -> 0.32
+input06.txt: OK -> 0.26
+input07.txt: OK -> 0.26
+input08.txt: OK -> 0.27
+input09.txt: OK -> 0.33
+input10.txt: OK -> 0.49
+Testing huge input
+input_huge.txt: OK -> 236.27

@@ -7,7 +7,7 @@
 using namespace std;
 
 const size_t size_of_ciur = 500;
-const size_t size_array = 1000000;
+const size_t size_array = 10000005;
 
 /**
     Functie care calculeaza cel mai mare divizor comun
@@ -123,7 +123,7 @@ void setkeys(uint64_t *primes, size_t no_primes, uint64_t &public_key,
     @param message caracterul ce trebuie encriptat -> uint8_t
     @return encrpyted_text – caracterul encriptat -> uint64_t
 */
-uint64_t encrypt(uint8_t message, uint64_t public_key, uint64_t n) {
+uint64_t encrypt(uint8_t message, uint64_t public_key, uint64_t n, int rank) {
     uint64_t e = public_key;
     uint64_t encrpyted_text = 1;
     while (e > 0) {
@@ -161,20 +161,17 @@ uint64_t *stringToNumbersArray(char *str, int sizeOfMessage,
                                uint64_t public_key, uint64_t n, int rank) {
     uint64_t *numbers = (uint64_t *)malloc(sizeOfMessage * sizeof(uint64_t));
     memset(numbers, 0, sizeOfMessage * sizeof(uint64_t));
-    if (sizeOfMessage > 200) {
-        printf("Rank %d: 0%% done\n", rank);
-    }
     for (int i = 0; i < sizeOfMessage; ++i) {
-        if (sizeOfMessage > 200 && i == sizeOfMessage / 4) {
-            printf("Rank %d: 25%% done\n", rank);
-        }
-        if (sizeOfMessage > 200 && i == sizeOfMessage / 2) {
-            printf("Rank %d: 50%% done\n", rank);
-        }
-        if (sizeOfMessage > 200 && i == sizeOfMessage * 3 / 4) {
-            printf("Rank %d: 75%% done\n", rank);
-        }
-        numbers[i] = encrypt((uint64_t)(str[i]), public_key, n);
+        // if (i == sizeOfMessage / 4) {
+        //     printf("Rank %d: 25%% done\n", rank);
+        // }
+        // if (i == sizeOfMessage / 2) {
+        //     printf("Rank %d: 50%% done\n", rank);
+        // }
+        // if (i == sizeOfMessage * 3 / 4) {
+        //     printf("Rank %d: 75%% done\n", rank);
+        // }
+        numbers[i] = encrypt((uint64_t)(str[i]), public_key, n, rank);
     }
     return numbers;
 }
@@ -218,7 +215,14 @@ int main(int argc, char *argv[]) {
         memset(primes, 0, size_of_ciur * sizeof(uint64_t));
         size_t no_primes = primefiller(primes);
         setkeys(primes, no_primes, public_key, private_key, n);
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    // mpi broadcast with public key, private key and n
+    MPI_Bcast(&public_key, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&private_key, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&n, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
 
+    if (rank == 0) {
         int start_index = 0;
         int portion_size = sizeOfMessage / (size - 1);
         int remainder = sizeOfMessage % (size - 1);
@@ -227,34 +231,25 @@ int main(int argc, char *argv[]) {
             if (i < remainder) {
                 send_size++;
             }
-            // printf("I sent %d data\n", send_size);
             MPI_Send(message + start_index, send_size, MPI_CHAR, i, 0,
                      MPI_COMM_WORLD);
-            // printf("Ok none cares %d\n", i);
             start_index += send_size;
         }
-            // mpi broadcast with public key, private key and n
-        MPI_Bcast(&public_key, 1, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
-        MPI_Bcast(&private_key, 1, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
-        MPI_Bcast(&n, 1, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
     }
-
-    // MPI_Barrier(MPI_COMM_WORLD);
     if (rank != 0) {
         int recv_size;
         MPI_Status status;
         MPI_Probe(0, 0, MPI_COMM_WORLD, &status);
         MPI_Get_count(&status, MPI_CHAR, &recv_size);
         char *recv_message = (char *)malloc(recv_size * sizeof(char));
-        // printf("Hallo from %d\n", rank);
         MPI_Recv(recv_message, recv_size, MPI_CHAR, 0, 0, MPI_COMM_WORLD,
                  MPI_STATUS_IGNORE);
-        // printf("Stfu from %d\n", rank);
         uint64_t *numbers =
             stringToNumbersArray(recv_message, recv_size, public_key, n, rank);
         str = numberArrayToString(numbers, recv_size, private_key, n);
         // Send str back to root
         MPI_Send(str, recv_size, MPI_CHAR, 0, 0, MPI_COMM_WORLD);
+        free(str);
     }
     if (rank == 0) {
         // Receive str from other processes
@@ -274,9 +269,8 @@ int main(int argc, char *argv[]) {
         printf("Decriptat: %s\n", rezultat);
     }
     MPI_Finalize();
-    // free(primes);
-    // free(message);
-    // free(rezultat);
-    // free(str);
+    free(primes);
+    free(message);
+    free(rezultat);
     return 0;
 }
