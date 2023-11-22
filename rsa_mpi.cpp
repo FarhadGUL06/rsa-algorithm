@@ -192,7 +192,8 @@ int main(int argc, char *argv[]) {
     uint64_t private_key;
     uint64_t n;
 
-    char message[size_array];
+    char *message = (char *)malloc(size_array * sizeof(char));
+    
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);  // process id
     MPI_Comm_size(MPI_COMM_WORLD, &size);  // number of processes
@@ -231,6 +232,7 @@ int main(int argc, char *argv[]) {
         MPI_Status status;
         MPI_Probe(0, 0, MPI_COMM_WORLD, &status);
         MPI_Get_count(&status, MPI_CHAR, &recv_size);
+        printf("recv size:%d\n", recv_size);
         char *recv_message = (char *)malloc(recv_size * sizeof(char));
         MPI_Recv(recv_message, recv_size, MPI_CHAR, 0, 0, MPI_COMM_WORLD,
                  MPI_STATUS_IGNORE);

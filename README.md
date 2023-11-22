@@ -77,4 +77,18 @@ input10.txt: OK -> 0.78
 Testing huge input
 input_huge.txt: OK -> 40.19
 
-## 
+## For run_openmp:
+input00.txt: OK -> 0.14
+input01.txt: OK -> 0.14
+input02.txt: OK -> 0.14
+input03.txt: OK -> 0.13
+input04.txt: OK -> 0.12
+input05.txt: OK -> 0.12
+input06.txt: OK -> 0.12
+input07.txt: OK -> 0.14
+input08.txt: OK -> 0.14
+input09.txt: OK -> 0.13
+input10.txt: OK -> 0.20
+Testing huge input
+input_huge.txt: OK -> 453.13
+
