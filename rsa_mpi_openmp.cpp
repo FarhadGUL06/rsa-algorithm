@@ -41,12 +41,18 @@ size_t primefiller(uint64_t *primes) {
 
     ciur[0] = false;
     ciur[1] = false;
-    for (size_t i = 2; i < size_of_ciur; i++) {
-        for (size_t j = i * 2; j < size_of_ciur; j += i) {
+
+    size_t i, j;
+    #pragma omp parallel for private(i)
+    for (i = 2; i < size_of_ciur; i++) {
+        #pragma omp parallel for private(j)
+        for (j = i * 2; j < size_of_ciur; j += i) {
             ciur[j] = false;
         }
     }
-    for (size_t i = 0; i < size_of_ciur; i++) {
+    
+    #pragma omp parallel for private(i) 
+    for (i = 0; i < size_of_ciur; i++) {
         if (ciur[i]) {
             primes[size_prime] = i;
             ++size_prime;
@@ -123,7 +129,7 @@ void setkeys(uint64_t *primes, size_t no_primes, uint64_t &public_key,
     @param message caracterul ce trebuie encriptat -> uint8_t
     @return encrpyted_text – caracterul encriptat -> uint64_t
 */
-uint64_t encrypt(uint8_t message, uint64_t public_key, uint64_t n) {
+uint64_t encrypt(uint8_t message, uint64_t public_key, uint64_t n, int rank) {
     uint64_t e = public_key;
     uint64_t encrpyted_text = 1;
     while (e > 0) {
@@ -157,13 +163,15 @@ uint8_t decrypt(uint64_t encrpyted_text, uint64_t private_key, uint64_t n) {
    @param str stringul de convertit (trimis ca char*)
    @return numbers – array-ul de numere
 */
-uint64_t *stringToNumbersArray(char *str, int sizeOfMessage,
-                               uint64_t public_key, uint64_t n) {
+uint64_t *stringToNumbersArray(char *str, size_t sizeOfMessage,
+                               uint64_t public_key, uint64_t n, int rank) {
     uint64_t *numbers = (uint64_t *)malloc(sizeOfMessage * sizeof(uint64_t));
     memset(numbers, 0, sizeOfMessage * sizeof(uint64_t));
 
-    for (int i = 0; i < sizeOfMessage; ++i) {
-        numbers[i] = encrypt((uint64_t)(str[i]), public_key, n);
+    size_t i;
+    #pragma omp parallel for private(i) shared(numbers, str)
+    for (i = 0; i < sizeOfMessage; ++i) {
+        numbers[i] = encrypt((uint64_t)(str[i]), public_key, n, rank);
     }
     return numbers;
 }
@@ -179,7 +187,10 @@ char *numberArrayToString(uint64_t *numbers, size_t size, uint64_t private_key,
                           uint64_t n) {
     char *str = (char *)malloc((size + 1) * sizeof(char));
     memset(str, 0, (size + 1) * sizeof(char));
-    for (size_t i = 0; i < size; ++i) {
+
+    size_t i;
+    #pragma omp parallel for private(i) shared(numbers, str)
+    for (i = 0; i < size; ++i) {
         str[i] = decrypt(numbers[i], private_key, n);
     }
     return str;
@@ -193,7 +204,6 @@ int main(int argc, char *argv[]) {
     uint64_t n;
 
     char *message = (char *)malloc(size_array * sizeof(char));
-    
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);  // process id
     MPI_Comm_size(MPI_COMM_WORLD, &size);  // number of processes
@@ -208,11 +218,20 @@ int main(int argc, char *argv[]) {
         memset(primes, 0, size_of_ciur * sizeof(uint64_t));
         size_t no_primes = primefiller(primes);
         setkeys(primes, no_primes, public_key, private_key, n);
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    // mpi broadcast with public key, private key and n
+    MPI_Bcast(&public_key, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&private_key, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&n, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
 
+    if (rank == 0) {
         int start_index = 0;
         int portion_size = sizeOfMessage / (size - 1);
         int remainder = sizeOfMessage % (size - 1);
-        for (int i = 1; i < size; i++) {
+        int i;
+        //#pragma omp parallel for private(i, send_size, start_index)
+        for (i = 1; i < size; i++) {
             send_size = portion_size;
             if (i < remainder) {
                 send_size++;
@@ -222,32 +241,29 @@ int main(int argc, char *argv[]) {
             start_index += send_size;
         }
     }
-    // mpi broadcast with public key, private key and n
-    MPI_Bcast(&public_key, 1, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&private_key, 1, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&n, 1, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
-    // MPI_Barrier(MPI_COMM_WORLD);
     if (rank != 0) {
         int recv_size;
         MPI_Status status;
         MPI_Probe(0, 0, MPI_COMM_WORLD, &status);
         MPI_Get_count(&status, MPI_CHAR, &recv_size);
-        printf("recv size:%d\n", recv_size);
         char *recv_message = (char *)malloc(recv_size * sizeof(char));
         MPI_Recv(recv_message, recv_size, MPI_CHAR, 0, 0, MPI_COMM_WORLD,
                  MPI_STATUS_IGNORE);
         uint64_t *numbers =
-            stringToNumbersArray(recv_message, recv_size, public_key, n);
+            stringToNumbersArray(recv_message, recv_size, public_key, n, rank);
         str = numberArrayToString(numbers, recv_size, private_key, n);
         // Send str back to root
         MPI_Send(str, recv_size, MPI_CHAR, 0, 0, MPI_COMM_WORLD);
+        free(str);
     }
     if (rank == 0) {
         // Receive str from other processes
         int start_index = 0;
         int portion_size = sizeOfMessage / (size - 1);
         int remainder = sizeOfMessage % (size - 1);
-        for (int i = 1; i < size; i++) {
+        int i;
+        //#pragma omp parallel for private(i, send_size, start_index)
+        for (i = 1; i < size; i++) {
             send_size = portion_size;
             if (i < remainder) {
                 send_size++;
@@ -261,7 +277,7 @@ int main(int argc, char *argv[]) {
     }
     MPI_Finalize();
     free(primes);
+    free(message);
     free(rezultat);
-    free(str);
     return 0;
 }
