@@ -61,6 +61,7 @@ size_t primefiller(uint64_t *primes) {
             ++size_prime;
         }
     }
+    free(ciur);
     return size_prime;
 }
 
@@ -233,5 +234,9 @@ int main() {
     char *str = numberArrayToString(numbers, sizeOfMessage);
     printf("Decriptat: %s\n", str);
     
+    free(primes);
+    free(numbers);
+    free(str);
+
     return 0;
 }
