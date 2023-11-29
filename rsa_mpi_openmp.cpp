@@ -7,7 +7,7 @@
 using namespace std;
 
 const size_t size_of_ciur = 500;
-const size_t size_array = 1000000000;
+const size_t size_array = 10000005;
 
 /**
     Functie care calculeaza cel mai mare divizor comun

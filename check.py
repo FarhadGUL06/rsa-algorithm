@@ -37,24 +37,15 @@ def run_c_program(input_file, exec_file):
         print(f"Error for {input_file}:")
         print(e.stderr)
 
-if __name__ == "__main__":
-    input_folder = "./tests"
-    if len(sys.argv) < 2:
-        print("Usage: python3 check.py <exec_name>")
-        sys.exit(1)
 
-    exec_name = sys.argv[1]
-    # Assuming input files are named input1.txt, input2.txt, etc.
-
+def run_tests():
     # Automatically determine the number of input files
     input_files = [f for f in os.listdir(input_folder) if os.path.isfile(os.path.join(input_folder, f))]
     num_files = len(input_files)
-
+    # Assuming input files are named input1.txt, input2.txt, etc.
     if num_files == 0:
         print(f"No input files found in the {input_folder} folder.")
         sys.exit(1)
-
-    #num_files = 3
 
     print("For " + exec_name + ":")
 
@@ -69,3 +60,42 @@ if __name__ == "__main__":
     print("Testing huge input")
     input_file = f"{input_folder}/input_huge.txt"
     run_c_program(input_file, exec_name)
+
+def run_perf():
+    # Automatically determine the number of input files
+    input_files = [f for f in os.listdir(input_folder) if os.path.isfile(os.path.join(input_folder, f))]
+    num_files = len(input_files)
+    # Assuming input files are named input1.txt, input2.txt, etc.
+    if num_files == 0:
+        print(f"No input files found in the {input_folder} folder.")
+        sys.exit(1)
+
+    print("For " + exec_name + ":")
+
+    for i in range(0, num_files - 1):
+        if i < 10:
+            no_file = "0" + str(i)
+        else:
+            no_file = str(i)
+        input_file = f"{input_folder}/input{no_file}.txt"
+        run_c_program(input_file, exec_name)
+
+    print("Testing huge input")
+    input_file = f"{input_folder}/input_huge.txt"
+    run_c_program(input_file, exec_name)
+
+if __name__ == "__main__":
+    input_folder = "./tests"
+    if len(sys.argv) < 2:
+        print("Usage: python3 check.py <type_check> <exec_name>")
+        sys.exit(1)
+
+    type_check = sys.argv[1]
+    exec_name = sys.argv[2]
+    
+    if type_check == "test":
+        run_tests()
+    
+    if type_check == "perf":
+        run_perf()
+
