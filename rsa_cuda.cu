@@ -13,7 +13,7 @@ int num_blocks = 65535;
 const int num_threads = 1024;
 
 const size_t size_of_ciur = 500;
-const uint64_t size_array = 1000000000;
+const uint64_t size_array = 10000005;
 
 // All headers for functions from bellow
 
