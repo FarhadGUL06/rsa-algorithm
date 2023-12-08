@@ -300,7 +300,9 @@ char *numberArrayToString(uint64_t **h_numbers, size_t size) {
 int main() {
     fflush(stdin);
     fflush(stdout);
-    
+    char *file_in = (char *)malloc(100 * sizeof(char));
+    file_in = argv[1];
+    printf("File in: %s\n", file_in);
     srand(time(NULL));
 
     uint64_t *primes = (uint64_t *)malloc(size_of_ciur * sizeof(uint64_t));
@@ -311,25 +313,33 @@ int main() {
     setkeys(primes, no_primes);
 
     char *message = (char *)malloc(size_array * sizeof(char));
-    char *p = fgets(message, size_array, stdin);
-
-    if (p == NULL) {
-        return -1;
-    }
+    
+    FILE *fin = fopen(file_in, "r");
+    fgets(message, size_array, fin);
+    fclose(fin);
 
     int sizeOfMessage = strlen(message) + 1;
 
     uint64_t *numbers = stringToNumbersArray(&message);
-    printf("Criptat: ");
+    char *file_out = (char *)malloc(100 * sizeof(char));
+    strcpy(file_out, "output/output");
+    strcat(file_out, (file_in + 11));
+    printf("File out: %s\n", file_out);
+    FILE *fout = fopen(file_out, "w");
+
+    fputs("Criptat: ", fout);
     for (int i = 0; i < sizeOfMessage; i++) {
-        printf("%lu ", numbers[i]);
+        fprintf(fout, "%lu ", numbers[i]);
     }
-    printf("\n");
+    fputs("\n", fout);
 
     char *str = numberArrayToString(&numbers, sizeOfMessage);
 
-    printf("Decriptat: %s\n", str);
-
+    fputs("Decriptat: ", fout);
+    fputs(str, fout);
+    fputs("\n", fout);
+    
+    fclose(fout);
     free(primes);
     free(numbers);
     free(str);

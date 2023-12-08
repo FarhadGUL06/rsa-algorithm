@@ -6,19 +6,19 @@ build:
 	nvcc -O2 -g -std=c++11 ./rsa_cuda.cu -o ./cuda
 
 run_serial:
-	./serial
+	./serial $(ARGS)
 
 run_openmp:
-	./openmp
+	./openmp $(ARGS)
 
 run_mpi:
-	mpirun -np 8 ./mpi
+	mpirun -np 8 ./mpi $(ARGS)
 
 run_pthread:
-	./pthread 8
+	./pthread 8 $(ARGS)
 
 run_cuda:
-	./cuda
+	./cuda $(ARGS)
 
 clean:
 	rm -f ./serial

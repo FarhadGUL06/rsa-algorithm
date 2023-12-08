@@ -12,7 +12,7 @@ uint64_t n;
 
 size_t nr_threads;
 const size_t size_of_ciur = 500;
-const uint64_t size_array = 10000005;
+const uint64_t size_array = 1000000000;
 
 
 struct thread_payload {
@@ -306,7 +306,8 @@ char *numberArrayToString(uint64_t *numbers, size_t size) {
 
 int main(int argc, char *argv[]) {
     nr_threads = atoi(argv[1]);
-
+    char *file_in = (char *)malloc(100 * sizeof(char));
+    file_in = argv[2];
     srand(time(NULL));
     uint64_t *primes = (uint64_t*) malloc(size_of_ciur * sizeof(uint64_t) + 1);
     memset(primes, 0, size_of_ciur * sizeof(uint64_t) + 1);
@@ -315,21 +316,32 @@ int main(int argc, char *argv[]) {
     setkeys(primes, no_primes);
 
     char *message = (char *)malloc(size_array * sizeof(char));
-    fgets(message, size_array, stdin);
+    FILE *fin = fopen(file_in, "r");
+    fgets(message, size_array, fin);
+    fclose(fin);
 
     int sizeOfMessage = strlen(message);
     uint64_t *numbers = stringToNumbersArray(message);
-
-    printf("Criptat: ");
+    
+    char *file_out = (char *)malloc(100 * sizeof(char));
+    strcpy(file_out, "output/output");
+    strcat(file_out, (file_in + 11));
+    printf("File out: %s\n", file_out);
+    FILE *fout = fopen(file_out, "w");
+    
+    fputs("Criptat: ", fout);
     for (int i = 0; i < sizeOfMessage; i++) {
-        printf("%lu ", numbers[i]);
+        fprintf(fout, "%lu ", numbers[i]);
     }
-    printf("\n");
+    fputs("\n", fout);
 
     char *str = numberArrayToString(numbers, sizeOfMessage);
     
-    printf("Decriptat: %s\n", str);
+    fputs("Decriptat: ", fout);
+    fputs(str, fout);
+    fputs("\n", fout);
 
+    fclose(fout);
     free(primes);
     free(numbers);
     free(str);
