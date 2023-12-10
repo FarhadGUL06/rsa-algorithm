@@ -1,13 +1,10 @@
-#include <cmath>
 #include <cstring>
-#include <iostream>
 
 #include "mpi.h"
 
-using namespace std;
+#include "rsa.hpp"
 
-const size_t size_of_ciur = 500;
-const size_t size_array = 10000005;
+using namespace std;
 
 /**
     Functie care calculeaza cel mai mare divizor comun
@@ -202,8 +199,16 @@ int main(int argc, char *argv[]) {
     uint64_t public_key;
     uint64_t private_key;
     uint64_t n;
-
+    char *file_in = (char *)malloc(100 * sizeof(char));
+    strcpy(file_in, input);
+    strcat(file_in, argv[6] + 10);
+    // printf("File in: %s\n", file_in);
     char *message = (char *)malloc(size_array * sizeof(char));
+    FILE *fin = fopen(file_in, "r");
+    char *file_out = (char *)malloc(100 * sizeof(char));
+    strcpy(file_out, output);
+    strcat(file_out, argv[6] + 10);
+    // printf("File out: %s\n", file_out);
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);  // process id
     MPI_Comm_size(MPI_COMM_WORLD, &size);  // number of processes
@@ -212,12 +217,13 @@ int main(int argc, char *argv[]) {
     uint64_t *primes = (uint64_t *)malloc(size_of_ciur * sizeof(uint64_t));
     int send_size;
     if (rank == 0) {
-        fgets(message, size_array, stdin);
+        fgets(message, size_array, fin);
         sizeOfMessage = strlen(message) + 1;
         srand(time(NULL));
         memset(primes, 0, size_of_ciur * sizeof(uint64_t));
         size_t no_primes = primefiller(primes);
         setkeys(primes, no_primes, public_key, private_key, n);
+        fclose(fin);
     }
     MPI_Barrier(MPI_COMM_WORLD);
     // mpi broadcast with public key, private key and n
@@ -273,7 +279,11 @@ int main(int argc, char *argv[]) {
             start_index += send_size;
         }
         sizeOfMessage = strlen(rezultat);
-        printf("Decriptat: %s\n", rezultat);
+        FILE *fout = fopen(file_out, "w");
+        fputs("Decriptat: ", fout);
+        fputs(rezultat, fout);
+        fputs("\n", fout);
+        fclose(fout);
     }
     MPI_Finalize();
     free(primes);

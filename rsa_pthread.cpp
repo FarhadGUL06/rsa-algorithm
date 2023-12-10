@@ -1,8 +1,7 @@
-#include <cmath>
 #include <cstring>
-#include <iostream>
 #include <pthread.h>
 
+#include "rsa.hpp"
 
 using namespace std;
 
@@ -11,9 +10,6 @@ uint64_t private_key;
 uint64_t n;
 
 size_t nr_threads;
-const size_t size_of_ciur = 500;
-const uint64_t size_array = 1000000000;
-
 
 struct thread_payload {
     size_t thread_id;
@@ -307,7 +303,9 @@ char *numberArrayToString(uint64_t *numbers, size_t size) {
 int main(int argc, char *argv[]) {
     nr_threads = atoi(argv[1]);
     char *file_in = (char *)malloc(100 * sizeof(char));
-    file_in = argv[2];
+    strcpy(file_in, input);
+    strcat(file_in, argv[2]);
+    printf("File in: %s\n", file_in);
     srand(time(NULL));
     uint64_t *primes = (uint64_t*) malloc(size_of_ciur * sizeof(uint64_t) + 1);
     memset(primes, 0, size_of_ciur * sizeof(uint64_t) + 1);
@@ -324,8 +322,8 @@ int main(int argc, char *argv[]) {
     uint64_t *numbers = stringToNumbersArray(message);
     
     char *file_out = (char *)malloc(100 * sizeof(char));
-    strcpy(file_out, "output/output");
-    strcat(file_out, (file_in + 11));
+    strcpy(file_out, output);
+    strcat(file_out, argv[2]);
     printf("File out: %s\n", file_out);
     FILE *fout = fopen(file_out, "w");
     

@@ -1,13 +1,10 @@
-#include <cmath>
 #include <cstring>
-#include <iostream>
 
 #include "mpi.h"
+#include "rsa.hpp"
 
 using namespace std;
 
-const size_t size_of_ciur = 500;
-const size_t size_array = 1000000000;
 
 /**
     Functie care calculeaza cel mai mare divizor comun
@@ -199,13 +196,18 @@ int main(int argc, char *argv[]) {
     uint64_t public_key;
     uint64_t private_key;
     uint64_t n;
+
     char *file_in = (char *)malloc(100 * sizeof(char));
-    file_in = argv[6];
+    strcpy(file_in, input);
+    strcat(file_in, argv[6] + 10);
+    // printf("File in: %s\n", file_in);
+    
     char *message = (char *)malloc(size_array * sizeof(char));
-    FILE *fin = fopen(file_in + 10, "r");
+    FILE *fin = fopen(file_in, "r");
     char *file_out = (char *)malloc(100 * sizeof(char));
-    strcpy(file_out, "output/output");
-    strcat(file_out, (file_in + 21));
+    strcpy(file_out, output);
+    strcat(file_out, argv[6] + 10);
+    // printf("File out: %s\n", file_out);
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);  // process id
     MPI_Comm_size(MPI_COMM_WORLD, &size);  // number of processes

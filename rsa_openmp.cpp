@@ -1,17 +1,12 @@
-#include <cmath>
 #include <cstring>
-#include <iostream>
+
+#include "rsa.hpp"
 
 using namespace std;
 
 uint64_t public_key;
 uint64_t private_key;
 uint64_t n;
-
-
-
-const size_t size_of_ciur = 500;
-const uint64_t size_array = 10000005;
 
 /**
     Functie care calculeaza cel mai mare divizor comun
@@ -194,17 +189,20 @@ char *numberArrayToString(uint64_t *numbers, size_t size) {
     return str;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
     srand(time(NULL));
     
     uint64_t *primes = (uint64_t*) malloc(size_array * sizeof(uint64_t));
     memset(primes, 0, size_of_ciur * sizeof(uint64_t));
     
     size_t no_primes;
-
+    char *file_in = (char *)malloc(100 * sizeof(char));
+    strcpy(file_in, input);
+    strcat(file_in, argv[1]);
+    printf("File in: %s\n", file_in);
     char *message = (char *)malloc(size_array * sizeof(char));
     int sizeOfMessage;
-    
+    FILE *fin = fopen(file_in, "r");
     #pragma omp parallel 
     {
         # pragma omp single
@@ -217,22 +215,31 @@ int main() {
 
             #pragma omp task
             {
-                fgets(message, size_array, stdin);
+                fgets(message, size_array, fin);
+                fclose(fin);
                 sizeOfMessage = strlen(message);
             }
         }
         
     }
     uint64_t *numbers = stringToNumbersArray(message);
-
-    printf("Criptat: ");
+    char *file_out = (char *)malloc(100 * sizeof(char));
+    strcpy(file_out, output);
+    strcat(file_out, argv[1]);
+    printf("File out: %s\n", file_out);
+    FILE *fout = fopen(file_out, "w");
+    fputs("Criptat: ", fout);
     for (int i = 0; i < sizeOfMessage; i++) {
-        printf("%lu ", numbers[i]);
+        fprintf(fout, "%lu ", numbers[i]);
     }
-    printf("\n");
+    fputs("\n", fout);
 
     char *str = numberArrayToString(numbers, sizeOfMessage);
-    printf("Decriptat: %s\n", str);
+    fputs("Decriptat: ", fout);
+    fputs(str, fout);
+    fputs("\n", fout);
+    
+    fclose(fout);
     
     free(primes);
     free(numbers);

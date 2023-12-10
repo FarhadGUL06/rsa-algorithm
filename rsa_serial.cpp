@@ -1,18 +1,13 @@
-#include <cmath>
 #include <cstring>
-#include <iostream>
 #include <fstream>
+
+#include "rsa.hpp"
+
 using namespace std;
 
 uint64_t public_key;
 uint64_t private_key;
 uint64_t n;
-
-
-
-const size_t size_of_ciur = 500;
-const uint64_t size_array = 1000000000;
-
 
 /**
     Functie care calculeaza cel mai mare divizor comun
@@ -189,7 +184,8 @@ char *numberArrayToString(uint64_t *numbers, size_t size) {
 int main(int argc, char *argv[]) {
     srand(time(NULL));
     char *file_in = (char *)malloc(100 * sizeof(char));
-    file_in = argv[1];
+    strcpy(file_in, input);
+    strcat(file_in, argv[1]);
     printf("File in: %s\n", file_in);
     uint64_t *primes = (uint64_t*) malloc(size_of_ciur * sizeof(uint64_t) + 1);
     memset(primes, 0, size_of_ciur * sizeof(uint64_t) + 1);
@@ -206,8 +202,8 @@ int main(int argc, char *argv[]) {
 
     uint64_t *numbers = stringToNumbersArray(message);
     char *file_out = (char *)malloc(100 * sizeof(char));
-    strcpy(file_out, "output/output");
-    strcat(file_out, (file_in + 11));
+    strcpy(file_out, output);
+    strcat(file_out, argv[1]);
     printf("File out: %s\n", file_out);
     FILE *fout = fopen(file_out, "w");
     

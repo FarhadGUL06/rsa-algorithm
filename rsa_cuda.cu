@@ -1,7 +1,7 @@
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 
-#include <iostream>
+#include "rsa.hpp"
 
 using namespace std;
 
@@ -11,9 +11,6 @@ uint64_t n;
 
 int num_blocks = 65535;
 const int num_threads = 1024;
-
-const size_t size_of_ciur = 500;
-const uint64_t size_array = 10000005;
 
 // All headers for functions from bellow
 
@@ -297,11 +294,12 @@ char *numberArrayToString(uint64_t **h_numbers, size_t size) {
     return h_str;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
     fflush(stdin);
     fflush(stdout);
     char *file_in = (char *)malloc(100 * sizeof(char));
-    file_in = argv[1];
+    strcpy(file_in, input);
+    strcat(file_in, argv[1]);
     printf("File in: %s\n", file_in);
     srand(time(NULL));
 
@@ -315,16 +313,23 @@ int main() {
     char *message = (char *)malloc(size_array * sizeof(char));
     
     FILE *fin = fopen(file_in, "r");
-    fgets(message, size_array, fin);
+    
+    char *ret = fgets(message, size_array, fin);
+    if (ret == NULL) {
+        printf("Error reading file\n");
+        return -1;
+    }
+    
+    
     fclose(fin);
 
     int sizeOfMessage = strlen(message) + 1;
 
     uint64_t *numbers = stringToNumbersArray(&message);
     char *file_out = (char *)malloc(100 * sizeof(char));
-    strcpy(file_out, "output/output");
-    strcat(file_out, (file_in + 11));
-    printf("File out: %s\n", file_out);
+    strcpy(file_out, output);
+    strcat(file_out, argv[1]);
+    //printf("File out: %s\n", file_out);
     FILE *fout = fopen(file_out, "w");
 
     fputs("Criptat: ", fout);
