@@ -34,8 +34,8 @@ uint64_t gcd(uint64_t a, uint64_t h) {
     @return size_prime – marimea array-ului de numere prime –> size_t
 */
 size_t primefiller(uint64_t *primes) {
-    int lim = sqrt(size_of_ciur);
-    long long res;
+    uint64_t lim = sqrt(size_of_ciur);
+    uint64_t res;
     size_t size_prime = 0;
     uint8_t *ciur = (uint8_t *) malloc(size_of_ciur * sizeof(uint8_t) + 1);
     memset(ciur, 0, size_of_ciur * sizeof(uint8_t) + 1);
@@ -44,30 +44,30 @@ size_t primefiller(uint64_t *primes) {
     ciur[1] = false;
 
     // aplicam ciurul lui Atkin
-    for (int i = 1; i <= lim; ++i) {
-        for (int j = 1; j <= lim; ++j) {
+    for (uint64_t i = 1; i <= lim; ++i) {
+        for (uint64_t j = 1; j <= lim; ++j) {
             res = 4 * i * i + j * j;
-            if (res <= size_of_ciur && (res % 12 == 1 || res % 12 == 5)) {
+            if (res <= (uint64_t) size_of_ciur && (res % 12 == 1 || res % 12 == 5)) {
                 ciur[res] = !ciur[res];
             }
 
             res = 3 * i * i +  j * j;
-            if (res <= size_of_ciur && res % 12 == 7) {
+            if (res <= (uint64_t) size_of_ciur && res % 12 == 7) {
                 ciur[res] = !ciur[res];
             }
 
             res = 3 * i * i - j * j;
-            if (i > j && res <= size_of_ciur && res % 12 == 11) {
+            if (i > j && res <= (uint64_t) size_of_ciur && res % 12 == 11) {
                 ciur[res] = !ciur[res];
             }
         }
     }
 
     // eliminam patratele perfecte
-    for (int i = 5; i <= lim; ++i) {
+    for (uint64_t i = 5; i <= lim; ++i) {
         if (ciur[i]) {
-            int k = i * i;
-            for (int j = k; j <= size_of_ciur; j += k) {
+            uint64_t k = i * i;
+            for (uint64_t j = k; j <= (uint64_t) size_of_ciur; j += k) {
                 ciur[j] = false;
             }
         }

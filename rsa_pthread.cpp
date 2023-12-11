@@ -30,6 +30,25 @@ uint64_t *stringToNumbersArray(char *str);
 char *numberArrayToString(uint64_t *numbers, size_t size);
 
 
+
+/**
+    Functie care ruleaza in paralel pentru a
+    genera numerele prime
+
+    @param arg argumentele functiei -> void*
+*/
+void *thread_primes(void *arg) {
+    thread_payload *info = (thread_payload *) arg;
+    uint64_t *numbers = info->numbers;
+    char *str = info->str;
+    size_t size_str = info->size_str;
+    size_t thread_id = info->thread_id;
+
+    
+
+    pthread_exit(NULL);
+}
+
 /**
     Functie care ruleaza in paralel pentru a encripta
     un string

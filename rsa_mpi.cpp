@@ -31,16 +31,49 @@ uint64_t gcd(uint64_t a, uint64_t h) {
    uint64_t
     @return size_prime – marimea array-ului de numere prime –> size_t
 */
-size_t primefiller(uint64_t *primes) {
+size_t primefiller(uint64_t *primes, int id_proc, int nr_processes) {
+    uint64_t lim = sqrt(size_of_ciur);
+    uint64_t res;
+    uint64_t start, stop;
+    start = (lim * id_proc) / nr_processes;
+    stop = (lim * (id_proc + 1)) / nr_processes;
     size_t size_prime = 0;
-    uint8_t *ciur = (uint8_t *)malloc(size_of_ciur * sizeof(uint8_t));
-    memset(ciur, 1, size_of_ciur * sizeof(uint8_t));
+    uint8_t *ciur = (uint8_t *) malloc(size_of_ciur * sizeof(uint8_t) + 1);
+    memset(ciur, 0, size_of_ciur * sizeof(uint8_t) + 1);
 
     ciur[0] = false;
     ciur[1] = false;
-    for (size_t i = 2; i < size_of_ciur; i++) {
-        for (size_t j = i * 2; j < size_of_ciur; j += i) {
-            ciur[j] = false;
+
+    // aplicam ciurul lui Atkin
+    for (uint64_t i = start; i <= stop; ++i) {
+        if (i == 0) {
+            continue;
+        }
+        for (uint64_t j = 1; j <= lim; ++j) {
+            res = 4 * i * i + j * j;
+            if (res <= (uint64_t) size_of_ciur && (res % 12 == 1 || res % 12 == 5)) {
+                ciur[res] = !ciur[res];
+            }
+
+            res = 3 * i * i +  j * j;
+            if (res <= (uint64_t) size_of_ciur && res % 12 == 7) {
+                ciur[res] = !ciur[res];
+            }
+
+            res = 3 * i * i - j * j;
+            if (i > j && res <= (uint64_t) size_of_ciur && res % 12 == 11) {
+                ciur[res] = !ciur[res];
+            }
+        }
+    }
+
+    // eliminam patratele perfecte
+    for (uint64_t i = 5; i <= lim; ++i) {
+        if (ciur[i]) {
+            uint64_t k = i * i;
+            for (uint64_t j = k; j <= (uint64_t) size_of_ciur; j += k) {
+                ciur[j] = false;
+            }
         }
     }
     for (size_t i = 0; i < size_of_ciur; i++) {
@@ -203,7 +236,6 @@ int main(int argc, char *argv[]) {
     // printf("File in: %s\n", file_in);
     
     char *message = (char *)malloc(size_array * sizeof(char));
-    FILE *fin = fopen(file_in, "r");
     char *file_out = (char *)malloc(100 * sizeof(char));
     strcpy(file_out, output);
     strcat(file_out, argv[6] + 10);
@@ -216,15 +248,26 @@ int main(int argc, char *argv[]) {
     uint64_t *primes = (uint64_t *)malloc(size_of_ciur * sizeof(uint64_t));
     int send_size;
     if (rank == 0) {
+        FILE *fin = fopen(file_in, "r");
         fgets(message, size_array, fin);
+        fclose(fin);
         sizeOfMessage = strlen(message) + 1;
         srand(time(NULL));
         memset(primes, 0, size_of_ciur * sizeof(uint64_t));
-        size_t no_primes = primefiller(primes);
-        setkeys(primes, no_primes, public_key, private_key, n);
-        fclose(fin);
+        // no_primes = primefiller()
+        // setkeys(primes, no_primes, public_key, private_key, n);
     }
     MPI_Barrier(MPI_COMM_WORLD);
+    size_t no_primes = primefiller(primes, rank, size);
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (rank == 0) {
+        for (int i = 0; i < 500; ++i) {
+             printf("%ld ", primes[i]);
+        }
+        printf("\n");
+        setkeys(primes, no_primes, public_key, private_key, n);
+        printf("\n\n ======= \n");
+    }
     // mpi broadcast with public key, private key and n
     MPI_Bcast(&public_key, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
     MPI_Bcast(&private_key, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);

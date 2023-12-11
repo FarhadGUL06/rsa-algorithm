@@ -33,27 +33,64 @@ uint64_t gcd(uint64_t a, uint64_t h) {
     @return size_prime – marimea array-ului de numere prime –> size_t
 */
 size_t primefiller(uint64_t *primes) {
+    uint64_t lim = sqrt(size_of_ciur);
+    uint64_t res;
     size_t size_prime = 0;
     uint8_t *ciur = (uint8_t *) malloc(size_of_ciur * sizeof(uint8_t) + 1);
-    memset(ciur, 1, size_of_ciur * sizeof(uint8_t));
+    memset(ciur, 0, size_of_ciur * sizeof(uint8_t) + 1);
 
     ciur[0] = false;
     ciur[1] = false;
+    uint64_t j;
     
-    size_t i, j;
-    #pragma omp parallel for private(i)
-    for (i = 2; i < size_of_ciur; i++) {
-        #pragma omp parallel for private(j)
-        for (j = i * 2; j < size_of_ciur; j += i) {
-            ciur[j] = false;
+    #pragma omp parallel for private(res) collapse(2)
+    for (uint64_t i = 1; i <= lim; ++i) {
+        for (j = 1; j <= lim; ++j) {
+            res = 4 * i * i + j * j;
+            if (res <= (uint64_t) size_of_ciur && (res % 12 == 1 || res % 12 == 5)) 
+                #pragma omp critical
+                {
+                    ciur[res] = !ciur[res];
+                }
+
+            res = 3 * i * i +  j * j;
+            if (res <= (uint64_t) size_of_ciur && res % 12 == 7) 
+                #pragma omp critical
+                {
+                    ciur[res] = !ciur[res];
+                }
+
+            res = 3 * i * i - j * j;
+            if (i > j && res <= (uint64_t) size_of_ciur && res % 12 == 11)
+                #pragma omp critical
+                {
+                    ciur[res] = !ciur[res];
+                }
         }
     }
-    
-    #pragma omp parallel for private(i) 
-    for (i = 0; i < size_of_ciur; i++) {
+
+    // eliminam patratele perfecte
+    #pragma omp parallel for
+    for (uint64_t i = 5; i <= lim; ++i) {
         if (ciur[i]) {
-            primes[size_prime] = i;
-            ++size_prime;
+            uint64_t k = i * i;
+            for (uint64_t j = k; j <= (uint64_t) size_of_ciur; j += k) {
+                #pragma omp critical
+                {
+                    ciur[j] = false;
+                }
+            }
+        }
+    }
+
+    #pragma omp parallel for
+    for (size_t i = 0; i < size_of_ciur; i++) {
+        #pragma omp critical
+        {
+            if (ciur[i]) {
+                primes[size_prime] = i;
+                ++size_prime;
+            }
         }
     }
     free(ciur);
