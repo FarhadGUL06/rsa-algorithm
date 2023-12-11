@@ -6,7 +6,7 @@
 #include <iostream>
 #include <cmath>
 
-const size_t size_of_ciur = 500;
+const size_t size_of_ciur = 25000;
 const uint64_t size_array = 10000005;
 
 const char *input = "tests/input/";

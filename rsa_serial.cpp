@@ -220,6 +220,7 @@ int main(int argc, char *argv[]) {
     fputs("\n", fout);
     
     fclose(fout);
+    free(message);
     free(primes);
     free(numbers);
     free(str);
