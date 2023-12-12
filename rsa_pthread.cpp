@@ -10,10 +10,12 @@ uint64_t private_key;
 uint64_t n;
 
 size_t nr_threads;
-
+// initialize barrier
+pthread_barrier_t barrier;
 struct thread_payload {
     size_t thread_id;
     uint64_t *numbers;
+    uint8_t *ciur;
     char *str;
     size_t size_str;
 };
@@ -28,26 +30,6 @@ uint64_t encrypt(uint8_t message);
 uint8_t decrypt(uint64_t encrpyted_text);
 uint64_t *stringToNumbersArray(char *str);
 char *numberArrayToString(uint64_t *numbers, size_t size);
-
-
-
-/**
-    Functie care ruleaza in paralel pentru a
-    genera numerele prime
-
-    @param arg argumentele functiei -> void*
-*/
-void *thread_primes(void *arg) {
-    thread_payload *info = (thread_payload *) arg;
-    uint64_t *numbers = info->numbers;
-    char *str = info->str;
-    size_t size_str = info->size_str;
-    size_t thread_id = info->thread_id;
-
-    
-
-    pthread_exit(NULL);
-}
 
 /**
     Functie care ruleaza in paralel pentru a encripta
@@ -131,6 +113,31 @@ uint64_t gcd(uint64_t a, uint64_t h) {
 }
 
 /**
+    Functie care ruleaza in paralel pentru a
+    genera numerele prime
+
+    @param arg argumentele functiei -> void*
+*/
+void *thread_primes(void *arg) {
+    thread_payload *info = (thread_payload *) arg;
+    size_t thread_id = info->thread_id;
+    uint8_t *ciur = info->ciur;
+    uint64_t start, stop;
+    start = (size_of_ciur * thread_id) / nr_threads;
+    stop = (size_of_ciur * (thread_id + 1)) / nr_threads;
+
+    if (start == 0) {
+        start = 2;
+    }
+    for (size_t i = start; i < stop; i++) {
+        for (size_t j = i * 2; j < size_of_ciur; j += i) {
+            ciur[j] = false;
+        }
+    }
+
+    pthread_exit(NULL);
+}
+/**
     Functia care construieste ciurul lui Eratosthenes
 
     @param primes care va referentia un array populat cu numere prime -> uint64_t
@@ -143,13 +150,18 @@ size_t primefiller(uint64_t *primes) {
 
     ciur[0] = false;
     ciur[1] = false;
+    pthread_t tid[nr_threads];
+    thread_payload info[nr_threads];
 
-    for (size_t i = 2; i < size_of_ciur; i++) {
-        for (size_t j = i * 2; j < size_of_ciur; j += i) {
-            ciur[j] = false;
-        }
+    for (size_t i = 0; i < nr_threads; i++) {
+        info[i].thread_id = i;
+        info[i].ciur = ciur;        
+        pthread_create(&tid[i], NULL, thread_primes, (void *)&info[i]);
     }
-    
+
+    for (size_t i = 0; i < nr_threads; i++) {
+        pthread_join(tid[i], NULL);
+    }
     for (size_t i = 0; i < size_of_ciur; i++) {
         if (ciur[i]) {
             primes[size_prime] = i;
@@ -308,7 +320,6 @@ char *numberArrayToString(uint64_t *numbers, size_t size) {
         info[i].numbers = numbers;
         info[i].str = str;
         info[i].size_str = size;
-        
         pthread_create(&tid[i], NULL, thread_decryption, (void *)&info[i]);
     }
 
@@ -328,7 +339,7 @@ int main(int argc, char *argv[]) {
     srand(time(NULL));
     uint64_t *primes = (uint64_t*) malloc(size_of_ciur * sizeof(uint64_t) + 1);
     memset(primes, 0, size_of_ciur * sizeof(uint64_t) + 1);
-    
+
     size_t no_primes = primefiller(primes);
     setkeys(primes, no_primes);
 

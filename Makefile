@@ -33,4 +33,4 @@ clean:
 	rm -f ./openmp
 	rm -f ./mpi
 	rm -f ./pthread
-	
+	rm -f ./tests/output/*.txt

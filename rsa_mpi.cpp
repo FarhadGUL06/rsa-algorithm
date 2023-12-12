@@ -31,12 +31,9 @@ uint64_t gcd(uint64_t a, uint64_t h) {
    uint64_t
     @return size_prime – marimea array-ului de numere prime –> size_t
 */
-size_t primefiller(uint64_t *primes, int id_proc, int nr_processes) {
+size_t primefiller(uint64_t *primes) {
     uint64_t lim = sqrt(size_of_ciur);
     uint64_t res;
-    uint64_t start, stop;
-    start = (lim * id_proc) / nr_processes;
-    stop = (lim * (id_proc + 1)) / nr_processes;
     size_t size_prime = 0;
     uint8_t *ciur = (uint8_t *) malloc(size_of_ciur * sizeof(uint8_t) + 1);
     memset(ciur, 0, size_of_ciur * sizeof(uint8_t) + 1);
@@ -45,10 +42,7 @@ size_t primefiller(uint64_t *primes, int id_proc, int nr_processes) {
     ciur[1] = false;
 
     // aplicam ciurul lui Atkin
-    for (uint64_t i = start; i <= stop; ++i) {
-        if (i == 0) {
-            continue;
-        }
+    for (uint64_t i = 1; i <= lim; ++i) {
         for (uint64_t j = 1; j <= lim; ++j) {
             res = 4 * i * i + j * j;
             if (res <= (uint64_t) size_of_ciur && (res % 12 == 1 || res % 12 == 5)) {
@@ -192,15 +186,6 @@ uint64_t *stringToNumbersArray(char *str, int sizeOfMessage,
     uint64_t *numbers = (uint64_t *)malloc(sizeOfMessage * sizeof(uint64_t));
     memset(numbers, 0, sizeOfMessage * sizeof(uint64_t));
     for (int i = 0; i < sizeOfMessage; ++i) {
-        // if (i == sizeOfMessage / 4) {
-        //     printf("Rank %d: 25%% done\n", rank);
-        // }
-        // if (i == sizeOfMessage / 2) {
-        //     printf("Rank %d: 50%% done\n", rank);
-        // }
-        // if (i == sizeOfMessage * 3 / 4) {
-        //     printf("Rank %d: 75%% done\n", rank);
-        // }
         numbers[i] = encrypt((uint64_t)(str[i]), public_key, n, rank);
     }
     return numbers;
@@ -254,20 +239,10 @@ int main(int argc, char *argv[]) {
         sizeOfMessage = strlen(message) + 1;
         srand(time(NULL));
         memset(primes, 0, size_of_ciur * sizeof(uint64_t));
-        // no_primes = primefiller()
-        // setkeys(primes, no_primes, public_key, private_key, n);
-    }
-    MPI_Barrier(MPI_COMM_WORLD);
-    size_t no_primes = primefiller(primes, rank, size);
-    MPI_Barrier(MPI_COMM_WORLD);
-    if (rank == 0) {
-        for (int i = 0; i < 500; ++i) {
-             printf("%ld ", primes[i]);
-        }
-        printf("\n");
+        size_t no_primes = primefiller(primes);
         setkeys(primes, no_primes, public_key, private_key, n);
-        printf("\n\n ======= \n");
     }
+    MPI_Barrier(MPI_COMM_WORLD);
     // mpi broadcast with public key, private key and n
     MPI_Bcast(&public_key, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
     MPI_Bcast(&private_key, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
