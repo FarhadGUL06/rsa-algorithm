@@ -159,6 +159,9 @@ uint64_t *stringToNumbersArray(char *str) {
     memset(numbers, 0, size_array * sizeof(uint64_t) + 1);
 
     for (size_t i = 0; i < strlen(str); ++i) {
+        if (i == 50000) {
+            printf("k\n");
+        }
         numbers[i] = encrypt((uint64_t)(str[i]));
     }
     return numbers;
@@ -182,7 +185,7 @@ char *numberArrayToString(uint64_t *numbers, size_t size) {
 }
 
 int main(int argc, char *argv[]) {
-    srand(time(NULL));
+    //srand(time(NULL));
     char *file_in = (char *)malloc(100 * sizeof(char));
     strcpy(file_in, input);
     strcat(file_in, argv[1]);

@@ -73,3 +73,17 @@ De schimbat citirea de la stdin in citire din fisiere
 Am adaugat implementarea cu OpenMP + MPI si CUDA
 Am masurat timpul de executare al celor 2 solutii:
 TO DO: de testat modificarea Ciurului lui Eratosterne -> Ciurul lui Atkin
+
+# Week 5:
+Dupa mai multe testari, am ajuns la concluzia ca implementarea ce foloseste 
+ciurul lui Atkin [1] nu reprezinta o implementare mai eficienta decat cea ce 
+foloseste ciurul lui Eratostene generarea numerelor prime, astfel am revenit
+la rezolvarea initiala. Am venit totusi cu o optimizare pe functiile de 
+encriptare si decriptare folosind o metoda de calculare a exponentului modular
+in timp logaritmic. [2]
+
+
+# Referinte
+
+[1] https://en.wikipedia.org/wiki/Sieve_of_Atkin
+[2] https://www.geeksforgeeks.org/modular-exponentiation-power-in-modular-arithmetic/

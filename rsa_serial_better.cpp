@@ -34,42 +34,63 @@ uint64_t gcd(uint64_t a, uint64_t h) {
     @return size_prime – marimea array-ului de numere prime –> size_t
 */
 size_t primefiller(uint64_t *primes) {
-    uint64_t lim = sqrt(size_of_ciur);
-    uint64_t res;
+    // RIP Atkin's sieve (10-12-2023 -> 13-12-2023) 
+    // uint64_t lim = sqrt(size_of_ciur);
+    // uint64_t res;
+    // size_t size_prime = 0;
+    // uint8_t *ciur = (uint8_t *) malloc(size_of_ciur * sizeof(uint8_t) + 1);
+    // memset(ciur, 0, size_of_ciur * sizeof(uint8_t) + 1);
+
+    // ciur[0] = false;
+    // ciur[1] = false;
+
+    // // aplicam ciurul lui Atkin
+    // for (uint64_t i = 1; i <= lim; ++i) {
+    //     for (uint64_t j = 1; j <= lim; ++j) {
+    //         res = 4 * i * i + j * j;
+    //         if (res <= (uint64_t) size_of_ciur && (res % 12 == 1 || res % 12 == 5)) {
+    //             ciur[res] = !ciur[res];
+    //         }
+
+    //         res = 3 * i * i +  j * j;
+    //         if (res <= (uint64_t) size_of_ciur && res % 12 == 7) {
+    //             ciur[res] = !ciur[res];
+    //         }
+
+    //         res = 3 * i * i - j * j;
+    //         if (i > j && res <= (uint64_t) size_of_ciur && res % 12 == 11) {
+    //             ciur[res] = !ciur[res];
+    //         }
+    //     }
+    // }
+
+    // // eliminam patratele perfecte
+    // for (uint64_t i = 5; i <= lim; ++i) {
+    //     if (ciur[i]) {
+    //         uint64_t k = i * i;
+    //         for (uint64_t j = k; j <= (uint64_t) size_of_ciur; j += k) {
+    //             ciur[j] = false;
+    //         }
+    //     }
+    // }
+    // for (size_t i = 0; i < size_of_ciur; i++) {
+    //     if (ciur[i]) {
+    //         primes[size_prime] = i;
+    //         ++size_prime;
+    //     }
+    // }
+    // free(ciur);
+    // return size_prime;
+
     size_t size_prime = 0;
     uint8_t *ciur = (uint8_t *) malloc(size_of_ciur * sizeof(uint8_t) + 1);
-    memset(ciur, 0, size_of_ciur * sizeof(uint8_t) + 1);
+    memset(ciur, 1, size_of_ciur * sizeof(uint8_t) + 1);
 
     ciur[0] = false;
     ciur[1] = false;
-
-    // aplicam ciurul lui Atkin
-    for (uint64_t i = 1; i <= lim; ++i) {
-        for (uint64_t j = 1; j <= lim; ++j) {
-            res = 4 * i * i + j * j;
-            if (res <= (uint64_t) size_of_ciur && (res % 12 == 1 || res % 12 == 5)) {
-                ciur[res] = !ciur[res];
-            }
-
-            res = 3 * i * i +  j * j;
-            if (res <= (uint64_t) size_of_ciur && res % 12 == 7) {
-                ciur[res] = !ciur[res];
-            }
-
-            res = 3 * i * i - j * j;
-            if (i > j && res <= (uint64_t) size_of_ciur && res % 12 == 11) {
-                ciur[res] = !ciur[res];
-            }
-        }
-    }
-
-    // eliminam patratele perfecte
-    for (uint64_t i = 5; i <= lim; ++i) {
-        if (ciur[i]) {
-            uint64_t k = i * i;
-            for (uint64_t j = k; j <= (uint64_t) size_of_ciur; j += k) {
-                ciur[j] = false;
-            }
+    for (size_t i = 2; i < size_of_ciur; i++) {
+        for (size_t j = i * 2; j < size_of_ciur; j += i) {
+            ciur[j] = false;
         }
     }
     for (size_t i = 0; i < size_of_ciur; i++) {
@@ -149,13 +170,16 @@ void setkeys(uint64_t *primes, size_t no_primes) {
 */
 uint64_t encrypt(uint8_t message) {
     uint64_t e = public_key;
-    uint64_t encrpyted_text = 1;
+    uint64_t result = 1;
+    uint64_t copy_message = (uint64_t) message;
     while (e > 0) {
-        encrpyted_text *= message;
-        encrpyted_text %= n;
-        --e;
+        if (e % 2 == 1) {
+            result = (result * copy_message) % n;
+        }
+        e = e >> 1;
+        copy_message = (copy_message * copy_message) % n;
     }
-    return encrpyted_text;
+    return result % n;
 }
 
 /**
@@ -165,14 +189,16 @@ uint64_t encrypt(uint8_t message) {
     @return decrypted – caracterul decriptat -> uint8_t
 */
 uint8_t decrypt(uint64_t encrpyted_text) {
-    uint64_t d = private_key;
-    uint64_t decrypted = 1;
-    while (d > 0) {
-        decrypted *= encrpyted_text;
-        decrypted %= n;
-        --d;
+    uint64_t copy_private_key = private_key;
+    uint64_t result = 1;
+    while (copy_private_key > 0) {
+        if (copy_private_key % 2 == 1) {
+            result = (result * encrpyted_text) % n;
+        }
+        copy_private_key = copy_private_key >> 1;
+        encrpyted_text = (encrpyted_text * encrpyted_text) % n;
     }
-    return (uint8_t) decrypted;
+    return (uint8_t) result % n;
 }
 
 /**
@@ -209,7 +235,7 @@ char *numberArrayToString(uint64_t *numbers, size_t size) {
 }
 
 int main(int argc, char *argv[]) {
-    srand(time(NULL));
+    //srand(time(NULL));
     char *file_in = (char *)malloc(100 * sizeof(char));
     strcpy(file_in, input);
     strcat(file_in, argv[1]);

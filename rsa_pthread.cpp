@@ -150,18 +150,13 @@ size_t primefiller(uint64_t *primes) {
 
     ciur[0] = false;
     ciur[1] = false;
-    pthread_t tid[nr_threads];
-    thread_payload info[nr_threads];
 
-    for (size_t i = 0; i < nr_threads; i++) {
-        info[i].thread_id = i;
-        info[i].ciur = ciur;        
-        pthread_create(&tid[i], NULL, thread_primes, (void *)&info[i]);
+    for (size_t i = 2; i < size_of_ciur; i++) {
+        for (size_t j = i * 2; j < size_of_ciur; j += i) {
+            ciur[j] = false;
+        }
     }
-
-    for (size_t i = 0; i < nr_threads; i++) {
-        pthread_join(tid[i], NULL);
-    }
+    
     for (size_t i = 0; i < size_of_ciur; i++) {
         if (ciur[i]) {
             primes[size_prime] = i;
@@ -171,6 +166,7 @@ size_t primefiller(uint64_t *primes) {
     free(ciur);
     return size_prime;
 }
+
 
 /**
     Functie care alege un numar random prim
@@ -239,13 +235,16 @@ void setkeys(uint64_t *primes, size_t no_primes) {
 */
 uint64_t encrypt(uint8_t message) {
     uint64_t e = public_key;
-    uint64_t encrpyted_text = 1;
+    uint64_t result = 1;
+    uint64_t copy_message = (uint64_t) message;
     while (e > 0) {
-        encrpyted_text *= message;
-        encrpyted_text %= n;
-        --e;
+        if (e % 2 == 1) {
+            result = (result * copy_message) % n;
+        }
+        e = e >> 1;
+        copy_message = (copy_message * copy_message) % n;
     }
-    return encrpyted_text;
+    return result % n;
 }
 
 /**
@@ -255,14 +254,16 @@ uint64_t encrypt(uint8_t message) {
     @return decrypted – caracterul decriptat -> uint8_t
 */
 uint8_t decrypt(uint64_t encrpyted_text) {
-    uint64_t d = private_key;
-    uint64_t decrypted = 1;
-    while (d > 0) {
-        decrypted *= encrpyted_text;
-        decrypted %= n;
-        --d;
+    uint64_t copy_private_key = private_key;
+    uint64_t result = 1;
+    while (copy_private_key > 0) {
+        if (copy_private_key % 2 == 1) {
+            result = (result * encrpyted_text) % n;
+        }
+        copy_private_key = copy_private_key >> 1;
+        encrpyted_text = (encrpyted_text * encrpyted_text) % n;
     }
-    return (uint8_t) decrypted;
+    return (uint8_t) result % n;
 }
 
 /**

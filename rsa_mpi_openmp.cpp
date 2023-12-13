@@ -33,23 +33,17 @@ uint64_t gcd(uint64_t a, uint64_t h) {
 */
 size_t primefiller(uint64_t *primes) {
     size_t size_prime = 0;
-    uint8_t *ciur = (uint8_t *)malloc(size_of_ciur * sizeof(uint8_t));
-    memset(ciur, 1, size_of_ciur * sizeof(uint8_t));
+    uint8_t *ciur = (uint8_t *) malloc(size_of_ciur * sizeof(uint8_t) + 1);
+    memset(ciur, 1, size_of_ciur * sizeof(uint8_t) + 1);
 
     ciur[0] = false;
     ciur[1] = false;
-
-    size_t i, j;
-    #pragma omp parallel for private(i)
-    for (i = 2; i < size_of_ciur; i++) {
-        #pragma omp parallel for private(j)
-        for (j = i * 2; j < size_of_ciur; j += i) {
+    for (size_t i = 2; i < size_of_ciur; i++) {
+        for (size_t j = i * 2; j < size_of_ciur; j += i) {
             ciur[j] = false;
         }
     }
-    
-    #pragma omp parallel for private(i) 
-    for (i = 0; i < size_of_ciur; i++) {
+    for (size_t i = 0; i < size_of_ciur; i++) {
         if (ciur[i]) {
             primes[size_prime] = i;
             ++size_prime;
@@ -128,13 +122,16 @@ void setkeys(uint64_t *primes, size_t no_primes, uint64_t &public_key,
 */
 uint64_t encrypt(uint8_t message, uint64_t public_key, uint64_t n, int rank) {
     uint64_t e = public_key;
-    uint64_t encrpyted_text = 1;
+    uint64_t result = 1;
+    uint64_t copy_message = (uint64_t) message;
     while (e > 0) {
-        encrpyted_text *= message;
-        encrpyted_text %= n;
-        --e;
+        if (e % 2 == 1) {
+            result = (result * copy_message) % n;
+        }
+        e = e >> 1;
+        copy_message = (copy_message * copy_message) % n;
     }
-    return encrpyted_text;
+    return result % n;
 }
 
 /**
@@ -144,14 +141,16 @@ uint64_t encrypt(uint8_t message, uint64_t public_key, uint64_t n, int rank) {
     @return decrypted – caracterul decriptat -> uint8_t
 */
 uint8_t decrypt(uint64_t encrpyted_text, uint64_t private_key, uint64_t n) {
-    uint64_t d = private_key;
-    uint64_t decrypted = 1;
-    while (d > 0) {
-        decrypted *= encrpyted_text;
-        decrypted %= n;
-        --d;
+    uint64_t copy_private_key = private_key;
+    uint64_t result = 1;
+    while (copy_private_key > 0) {
+        if (copy_private_key % 2 == 1) {
+            result = (result * encrpyted_text) % n;
+        }
+        copy_private_key = copy_private_key >> 1;
+        encrpyted_text = (encrpyted_text * encrpyted_text) % n;
     }
-    return (uint8_t)decrypted;
+    return (uint8_t) result % n;
 }
 
 /**
