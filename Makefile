@@ -4,8 +4,9 @@ build:
 	g++ -Wall -o ./pthread ./rsa_pthread.cpp -lpthread
 	mpic++ -Wall -o ./mpi ./rsa_mpi.cpp -lm
 	mpic++ -Wall -o ./mpi_openmp ./rsa_mpi_openmp.cpp -lm -fopenmp
-	g++ -Wall -o ./better_serial ./rsa_serial_better.cpp
-	# nvcc -O2 -g -std=c++11 ./rsa_cuda.cu -o ./cuda
+	g++ -Wall -o ./better_serial ./rsa_serial_better.cpp ./src/bignumber.cpp ./src/bignumber.h
+	nvcc -O2 -g -std=c++11 ./rsa_cuda.cu -o ./cuda
+	nvcc -O2 -g -std=c++11 ./rsa_cuda_opt.cu -o ./cuda_opt
 
 run_serial:
 	./serial $(ARGS)
@@ -24,6 +25,9 @@ run_pthread:
 
 run_cuda:
 	./cuda $(ARGS)
+
+run_cuda_opt:
+	./cuda_opt $(ARGS)
 
 run_serial_better:
 	./better_serial $(ARGS)

@@ -3,6 +3,8 @@
 
 #include "rsa.hpp"
 
+//#include "src/bignumber.h"
+
 using namespace std;
 
 uint64_t public_key;
@@ -235,7 +237,8 @@ char *numberArrayToString(uint64_t *numbers, size_t size) {
 }
 
 int main(int argc, char *argv[]) {
-    //srand(time(NULL));
+    srand(time(NULL));
+
     char *file_in = (char *)malloc(100 * sizeof(char));
     strcpy(file_in, input);
     strcat(file_in, argv[1]);

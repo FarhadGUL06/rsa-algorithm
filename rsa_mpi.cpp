@@ -125,7 +125,7 @@ uint64_t encrypt(uint8_t message, uint64_t public_key, uint64_t n, int rank) {
     uint64_t result = 1;
     uint64_t copy_message = (uint64_t) message;
     while (e > 0) {
-        if (e % 2 == 1) {
+        if (e & 1) {
             result = (result * copy_message) % n;
         }
         e = e >> 1;
@@ -144,7 +144,7 @@ uint8_t decrypt(uint64_t encrpyted_text, uint64_t private_key, uint64_t n) {
     uint64_t copy_private_key = private_key;
     uint64_t result = 1;
     while (copy_private_key > 0) {
-        if (copy_private_key % 2 == 1) {
+        if (copy_private_key & 1) {
             result = (result * encrpyted_text) % n;
         }
         copy_private_key = copy_private_key >> 1;

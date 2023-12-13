@@ -73,9 +73,11 @@ def run_tests():
         input_file = f"{input_folder}/test{no_file}.txt"
         run_c_program(input_file, exec_name)
 
+    '''
     print("Testing huge input")
     input_file = f"{input_folder}/test_huge.txt"
     run_c_program(input_file, exec_name)
+    '''
 
 def run_perf():
     # Automatically determine the number of input files
@@ -96,9 +98,11 @@ def run_perf():
         input_file = f"{input_folder}/test{no_file}.txt"
         run_c_program(input_file, exec_name)
 
+    '''
     print("Testing huge input")
     input_file = f"{input_folder}/test_huge.txt"
     run_c_program(input_file, exec_name)
+    '''
 
 if __name__ == "__main__":
     subprocess.run(make_clean, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

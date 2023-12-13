@@ -98,7 +98,7 @@ void setkeys(uint64_t *primes, size_t no_primes) {
     }
 
     public_key = e;
-    int d = 2;
+    uint64_t d = 2;
 
     while (1) {
         if ((d * e) % phi == 1) {
@@ -124,7 +124,7 @@ uint64_t encrypt(uint8_t message) {
     uint64_t result = 1;
     uint64_t copy_message = (uint64_t) message;
     while (e > 0) {
-        if (e % 2 == 1) {
+        if (e & 1) {
             result = (result * copy_message) % n;
         }
         e = e >> 1;
@@ -143,7 +143,7 @@ uint8_t decrypt(uint64_t encrpyted_text) {
     uint64_t copy_private_key = private_key;
     uint64_t result = 1;
     while (copy_private_key > 0) {
-        if (copy_private_key % 2 == 1) {
+        if (copy_private_key & 1) {
             result = (result * encrpyted_text) % n;
         }
         copy_private_key = copy_private_key >> 1;
@@ -189,7 +189,8 @@ char *numberArrayToString(uint64_t *numbers, size_t size) {
 }
 
 int main(int argc, char *argv[]) {
-    srand(time(NULL));
+    //srand(time(NULL));
+
     
     uint64_t *primes = (uint64_t*) malloc(size_array * sizeof(uint64_t));
     memset(primes, 0, size_of_ciur * sizeof(uint64_t));
