@@ -1,40 +1,48 @@
+CC=g++
+MPICC=mpic++
+CUDA=nvcc
+CFLAGS=-g -Wall -ggdb3 -fno-omit-frame-pointer
+
 build:
-	g++ -Wall -o ./serial ./rsa_serial.cpp
-	g++ -Wall -fopenmp -o ./openmp ./rsa_openmp.cpp
-	g++ -Wall -o ./pthread ./rsa_pthread.cpp -lpthread
-	mpic++ -Wall -o ./mpi ./rsa_mpi.cpp -lm
-	mpic++ -Wall -o ./mpi_openmp ./rsa_mpi_openmp.cpp -lm -fopenmp
-	g++ -Wall -o ./better_serial ./rsa_serial_better.cpp ./src/bignumber.cpp ./src/bignumber.h
-	nvcc -O2 -g -std=c++11 ./rsa_cuda.cu -o ./cuda
-	nvcc -O2 -g -std=c++11 ./rsa_cuda_opt.cu -o ./cuda_opt
+	$(CC) $(CFLAGS) -o ./serial ./rsa_serial.cpp
+	$(CC) $(CFLAGS) -o ./serial_opt ./rsa_serial_opt.cpp
+
+	$(CC) $(CFLAGS) -fopenmp -o ./openmp ./rsa_openmp.cpp
+
+	$(CC) $(CFLAGS) -o ./pthread ./rsa_pthread.cpp -lpthread
+
+	$(MPICC) $(CFLAGS) -o ./mpi ./rsa_mpi.cpp -lm
+
+	$(MPICC) $(CFLAGS) -o ./mpi_openmp ./rsa_mpi_openmp.cpp -lm -fopenmp
+	
+	$(CUDA) -O2 -g -std=c++11 ./rsa_cuda_opt.cu -o ./cuda_opt
 
 run_serial:
 	./serial $(ARGS)
+
+run_serial_opt:
+	./serial_opt $(ARGS)
 
 run_openmp:
 	./openmp $(ARGS)
 
 run_mpi:
-	mpirun -np 8 ./mpi $(ARGS)
+	mpirun --mca btl_tcp_if_include eth0 -np 8 ./mpi $(ARGS)
 
 run_mpi_openmp:
 	mpirun -np 8 ./mpi_openmp $(ARGS)
 
 run_pthread:
 	./pthread 8 $(ARGS)
-
-run_cuda:
-	./cuda $(ARGS)
-
+	
 run_cuda_opt:
 	./cuda_opt $(ARGS)
 
-run_serial_better:
-	./better_serial $(ARGS)
-
 clean:
-	rm -f ./serial
+	rm -f ./serial*
 	rm -f ./openmp
-	rm -f ./mpi
+	rm -f ./mpi*
 	rm -f ./pthread
+	rm -f ./cuda*
 	rm -f ./tests/output/*.txt
+	

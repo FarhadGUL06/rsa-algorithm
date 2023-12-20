@@ -1,7 +1,4 @@
-#include <cstring>
-
 #include "mpi.h"
-
 #include "rsa.hpp"
 
 using namespace std;
@@ -33,7 +30,7 @@ uint64_t gcd(uint64_t a, uint64_t h) {
 */
 size_t primefiller(uint64_t *primes) {
     size_t size_prime = 0;
-    uint8_t *ciur = (uint8_t *) malloc(size_of_ciur * sizeof(uint8_t) + 1);
+    uint8_t *ciur = (uint8_t *)malloc(size_of_ciur * sizeof(uint8_t) + 1);
     memset(ciur, 1, size_of_ciur * sizeof(uint8_t) + 1);
 
     ciur[0] = false;
@@ -123,7 +120,7 @@ void setkeys(uint64_t *primes, size_t no_primes, uint64_t &public_key,
 uint64_t encrypt(uint8_t message, uint64_t public_key, uint64_t n, int rank) {
     uint64_t e = public_key;
     uint64_t result = 1;
-    uint64_t copy_message = (uint64_t) message;
+    uint64_t copy_message = (uint64_t)message;
     while (e > 0) {
         if (e & 1) {
             result = (result * copy_message) % n;
@@ -150,7 +147,7 @@ uint8_t decrypt(uint64_t encrpyted_text, uint64_t private_key, uint64_t n) {
         copy_private_key = copy_private_key >> 1;
         encrpyted_text = (encrpyted_text * encrpyted_text) % n;
     }
-    return (uint8_t) result % n;
+    return (uint8_t)result % n;
 }
 
 /**
@@ -165,7 +162,7 @@ uint64_t *stringToNumbersArray(char *str, size_t sizeOfMessage,
     memset(numbers, 0, sizeOfMessage * sizeof(uint64_t));
 
     size_t i;
-    #pragma omp parallel for private(i) shared(numbers, str)
+#pragma omp parallel for private(i) shared(numbers, str)
     for (i = 0; i < sizeOfMessage; ++i) {
         numbers[i] = encrypt((uint64_t)(str[i]), public_key, n, rank);
     }
@@ -185,7 +182,7 @@ char *numberArrayToString(uint64_t *numbers, size_t size, uint64_t private_key,
     memset(str, 0, (size + 1) * sizeof(char));
 
     size_t i;
-    #pragma omp parallel for private(i) shared(numbers, str)
+#pragma omp parallel for private(i) shared(numbers, str)
     for (i = 0; i < size; ++i) {
         str[i] = decrypt(numbers[i], private_key, n);
     }
@@ -200,13 +197,13 @@ int main(int argc, char *argv[]) {
     uint64_t n;
     char *file_in = (char *)malloc(100 * sizeof(char));
     strcpy(file_in, input);
-    strcat(file_in, argv[6] + 10);
+    strcat(file_in, argv[1]);
     // printf("File in: %s\n", file_in);
     char *message = (char *)malloc(size_array * sizeof(char));
     FILE *fin = fopen(file_in, "r");
     char *file_out = (char *)malloc(100 * sizeof(char));
     strcpy(file_out, output);
-    strcat(file_out, argv[6] + 10);
+    strcat(file_out, argv[1]);
     // printf("File out: %s\n", file_out);
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);  // process id
@@ -218,7 +215,7 @@ int main(int argc, char *argv[]) {
     if (rank == 0) {
         fgets(message, size_array, fin);
         sizeOfMessage = strlen(message) + 1;
-        srand(time(NULL));
+        srand(seed);
         memset(primes, 0, size_of_ciur * sizeof(uint64_t));
         size_t no_primes = primefiller(primes);
         setkeys(primes, no_primes, public_key, private_key, n);
@@ -235,7 +232,7 @@ int main(int argc, char *argv[]) {
         int portion_size = sizeOfMessage / (size - 1);
         int remainder = sizeOfMessage % (size - 1);
         int i;
-        //#pragma omp parallel for private(i, send_size, start_index)
+        // #pragma omp parallel for private(i, send_size, start_index)
         for (i = 1; i < size; i++) {
             send_size = portion_size;
             if (i < remainder) {
@@ -267,7 +264,7 @@ int main(int argc, char *argv[]) {
         int portion_size = sizeOfMessage / (size - 1);
         int remainder = sizeOfMessage % (size - 1);
         int i;
-        //#pragma omp parallel for private(i, send_size, start_index)
+        // #pragma omp parallel for private(i, send_size, start_index)
         for (i = 1; i < size; i++) {
             send_size = portion_size;
             if (i < remainder) {

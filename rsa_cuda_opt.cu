@@ -5,24 +5,6 @@
 
 using namespace std;
 
-uint64_t public_key;
-uint64_t private_key;
-uint64_t n;
-
-int num_blocks = 65535;
-const int num_threads = 1024;
-
-// All headers for functions from bellow
-
-uint64_t gcd(uint64_t a, uint64_t h);
-size_t primefiller(uint64_t *primes);
-uint64_t pickrandomprime(uint64_t *primes, size_t no_primes, int64_t *pos);
-void setkeys(uint64_t *primes, size_t no_primes);
-uint64_t encrypt(uint8_t message);
-uint8_t decrypt(uint64_t encrpyted_text);
-uint64_t *stringToNumbersArray(char *str);
-char *numberArrayToString(uint64_t *numbers, size_t size);
-
 /**
     Functie care calculeaza cel mai mare divizor comun
     pentru 2 numere intregi
@@ -98,8 +80,8 @@ uint64_t pickrandomprime(uint64_t *primes, size_t no_primes, uint64_t *pos) {
 */
 void setkeys(uint64_t *primes, size_t no_primes) {
     uint64_t pos = 0;
-    uint64_t prime1 = pickrandomprime(primes, no_primes, &pos);  // 17291
-    uint64_t prime2 = pickrandomprime(primes, no_primes, &pos);  // 64817
+    uint64_t prime1 = pickrandomprime(primes, no_primes, &pos);
+    uint64_t prime2 = pickrandomprime(primes, no_primes, &pos);
 
     n = prime1 * prime2;
 
@@ -131,44 +113,11 @@ void setkeys(uint64_t *primes, size_t no_primes) {
 }
 
 /**
-    Functie de encriptare a unui caracter
-
-    @param message caracterul ce trebuie encriptat -> uint8_t
-    @return encrpyted_text – caracterul encriptat -> uint64_t
-*/
-uint64_t encrypt(uint8_t message) {
-    uint64_t e = public_key;
-    uint64_t result = 1;
-    uint64_t copy_message = (uint64_t) message;
-    while (e > 0) {
-        if (e & 1) {
-            result = (result * copy_message) % n;
-        }
-        e = e >> 1;
-        copy_message = (copy_message * copy_message) % n;
-    }
-    return result % n;
-}
-
-/**
-    Functie de decriptare a unui numar
+    Functie de decriptare paralela a unui numar
 
     @param encrypted_text caracterul ce trebuie decriptat -> uint64_t
     @return decrypted – caracterul decriptat -> uint8_t
 */
-uint8_t decrypt(uint64_t encrpyted_text) {
-    uint64_t copy_private_key = private_key;
-    uint64_t result = 1;
-    while (copy_private_key > 0) {
-        if (copy_private_key & 1) {
-            result = (result * encrpyted_text) % n;
-        }
-        copy_private_key = copy_private_key >> 1;
-        encrpyted_text = (encrpyted_text * encrpyted_text) % n;
-    }
-    return (uint8_t) result % n;
-}
-
 __global__ void parallel_decrypt(char *d_str, uint64_t *d_numbers, size_t size,
                                  uint64_t *d_private_key, uint64_t *d_n) {
     unsigned int index = blockIdx.x * blockDim.x + threadIdx.x;
@@ -176,20 +125,26 @@ __global__ void parallel_decrypt(char *d_str, uint64_t *d_numbers, size_t size,
         // Indice mai mare decat lungimea vectorului de inserat
         return;
     }
-    // d_str[index] = decrypt(d_numbers[index]);
     uint64_t encrpyted_text = d_numbers[index];
 
-    uint64_t d = *d_private_key;
-    // printf("Cheie priv: %ld\n", d);
-    uint64_t decrypted = 1;
-    while (d > 0) {
-        decrypted *= encrpyted_text;
-        decrypted %= *d_n;
-        --d;
+    uint64_t copy_private_key = *d_private_key;
+    uint64_t result = 1;
+    while (copy_private_key > 0) {
+        if (copy_private_key & 1) {
+            result = (result * encrpyted_text) % *d_n;
+        }
+        copy_private_key = copy_private_key >> 1;
+        encrpyted_text = (encrpyted_text * encrpyted_text) % *d_n;
     }
-    d_str[index] = decrypted;
+    d_str[index] = (uint8_t)result % *d_n;
 }
 
+/**
+    Functie de encriptare a unui caracter
+
+    @param message caracterul ce trebuie encriptat -> uint8_t
+    @return encrpyted_text – caracterul encriptat -> uint64_t
+*/
 __global__ void parallel_encrypt(uint64_t *d_numbers, char *d_str, size_t size,
                                  uint64_t *d_public_key, uint64_t *d_n) {
     unsigned int index = blockIdx.x * blockDim.x + threadIdx.x;
@@ -199,13 +154,17 @@ __global__ void parallel_encrypt(uint64_t *d_numbers, char *d_str, size_t size,
         return;
     }
     uint64_t e = *d_public_key;
-    uint64_t encrpyted_text = 1;
+
+    uint64_t result = 1;
+    uint64_t copy_message = (uint64_t)d_str[index];
     while (e > 0) {
-        encrpyted_text *= d_str[index];
-        encrpyted_text %= *d_n;
-        --e;
+        if (e & 1) {
+            result = (result * copy_message) % *d_n;
+        }
+        e = e >> 1;
+        copy_message = (copy_message * copy_message) % *d_n;
     }
-    d_numbers[index] = encrpyted_text;
+    d_numbers[index] = result % *d_n;
 }
 
 /**
@@ -225,9 +184,12 @@ uint64_t *stringToNumbersArray(char **h_str) {
     cudaMalloc((void **)&d_numbers, size * sizeof(uint64_t));
     cudaMemset(d_numbers, 0, size * sizeof(uint64_t));
 
-    /*for (size_t i = 0; i < strlen(*h_str); ++i) {
+    /*
+    Old function:
+    for (size_t i = 0; i < strlen(*h_str); ++i) {
         numbers[i] = encrypt((uint64_t)(*h_str[i]));
-    }*/
+    }
+    */
     uint64_t *d_public_key;
     uint64_t *d_n;
     cudaMalloc((void **)&d_public_key, sizeof(uint64_t));
@@ -270,9 +232,12 @@ char *numberArrayToString(uint64_t **h_numbers, size_t size) {
     cudaMalloc((void **)&d_str, size * sizeof(char));
     cudaMemset(d_str, 0, size * sizeof(char));
 
-    /*for (size_t i = 0; i < size; ++i) {
+    /*
+    Old function:
+    for (size_t i = 0; i < size; ++i) {
         h_str[i] = decrypt(*h_numbers[i]);
-    }*/
+    }
+    */
 
     // Copy data for decrypt
     uint64_t *d_private_key;
@@ -304,8 +269,9 @@ int main(int argc, char *argv[]) {
     char *file_in = (char *)malloc(100 * sizeof(char));
     strcpy(file_in, input);
     strcat(file_in, argv[1]);
-    printf("File in: %s\n", file_in);
-    //srand(time(NULL));
+    // printf("File in: %s\n", file_in);
+
+    srand(seed);
 
     uint64_t *primes = (uint64_t *)malloc(size_of_ciur * sizeof(uint64_t));
     memset(primes, 0, size_of_ciur * sizeof(uint64_t));
@@ -315,16 +281,15 @@ int main(int argc, char *argv[]) {
     setkeys(primes, no_primes);
 
     char *message = (char *)malloc(size_array * sizeof(char));
-    
+
     FILE *fin = fopen(file_in, "r");
-    
+
     char *ret = fgets(message, size_array, fin);
     if (ret == NULL) {
         printf("Error reading file\n");
         return -1;
     }
-    
-    
+
     fclose(fin);
 
     int sizeOfMessage = strlen(message) + 1;
@@ -333,7 +298,7 @@ int main(int argc, char *argv[]) {
     char *file_out = (char *)malloc(100 * sizeof(char));
     strcpy(file_out, output);
     strcat(file_out, argv[1]);
-    //printf("File out: %s\n", file_out);
+    // printf("File out: %s\n", file_out);
     FILE *fout = fopen(file_out, "w");
 
     fputs("Criptat: ", fout);
@@ -347,7 +312,7 @@ int main(int argc, char *argv[]) {
     fputs("Decriptat: ", fout);
     fputs(str, fout);
     fputs("\n", fout);
-    
+
     fclose(fout);
     free(primes);
     free(numbers);

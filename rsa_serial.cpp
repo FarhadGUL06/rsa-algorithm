@@ -5,10 +5,6 @@
 
 using namespace std;
 
-uint64_t public_key;
-uint64_t private_key;
-uint64_t n;
-
 /**
     Functie care calculeaza cel mai mare divizor comun
     pentru 2 numere intregi
@@ -30,12 +26,13 @@ uint64_t gcd(uint64_t a, uint64_t h) {
 /**
     Functia care construieste ciurul lui Eratosthenes
 
-    @param primes care va referentia un array populat cu numere prime -> uint64_t
+    @param primes care va referentia un array populat cu numere prime ->
+   uint64_t
     @return size_prime – marimea array-ului de numere prime –> size_t
 */
 size_t primefiller(uint64_t *primes) {
     size_t size_prime = 0;
-    uint8_t *ciur = (uint8_t *) malloc(size_of_ciur * sizeof(uint8_t) + 1);
+    uint8_t *ciur = (uint8_t *)malloc(size_of_ciur * sizeof(uint8_t) + 1);
     memset(ciur, 1, size_of_ciur * sizeof(uint8_t) + 1);
 
     ciur[0] = false;
@@ -57,16 +54,17 @@ size_t primefiller(uint64_t *primes) {
 
 /**
     Functie care alege un numar random prim
-    
+
     @param primes array-ul de numere prime -> uint64_t
     @param no_primes numarul de numere prime -> size_t
-    @param pos retine pozitia anterioara pentru a pastra diferenta intre prime1 si prime2 -> uint64_t
+    @param pos retine pozitia anterioara pentru a pastra diferenta intre prime1
+   si prime2 -> uint64_t
     @return primes[k] – numarul prim de la pozitia k -> uint64_t
 */
 uint64_t pickrandomprime(uint64_t *primes, size_t no_primes, uint64_t *pos) {
     uint64_t k = rand() % no_primes;
     while (k == *pos) {
-        k = rand() % no_primes;   
+        k = rand() % no_primes;
     }
     *pos = k;
     return primes[k];
@@ -145,7 +143,7 @@ uint8_t decrypt(uint64_t encrpyted_text) {
         decrypted %= n;
         --d;
     }
-    return (uint8_t) decrypted;
+    return (uint8_t)decrypted;
 }
 
 /**
@@ -185,16 +183,16 @@ char *numberArrayToString(uint64_t *numbers, size_t size) {
 }
 
 int main(int argc, char *argv[]) {
-    //srand(time(NULL));
+    // srand(time(NULL));
     char *file_in = (char *)malloc(100 * sizeof(char));
     strcpy(file_in, input);
     strcat(file_in, argv[1]);
     printf("File in: %s\n", file_in);
-    uint64_t *primes = (uint64_t*) malloc(size_of_ciur * sizeof(uint64_t) + 1);
+    uint64_t *primes = (uint64_t *)malloc(size_of_ciur * sizeof(uint64_t) + 1);
     memset(primes, 0, size_of_ciur * sizeof(uint64_t) + 1);
-    
+
     size_t no_primes = primefiller(primes);
-    
+
     setkeys(primes, no_primes);
 
     char *message = (char *)malloc(size_array * sizeof(char));
@@ -209,7 +207,7 @@ int main(int argc, char *argv[]) {
     strcat(file_out, argv[1]);
     printf("File out: %s\n", file_out);
     FILE *fout = fopen(file_out, "w");
-    
+
     fputs("Criptat: ", fout);
     for (int i = 0; i < sizeOfMessage; i++) {
         fprintf(fout, "%lu ", numbers[i]);
@@ -217,11 +215,11 @@ int main(int argc, char *argv[]) {
     fputs("\n", fout);
 
     char *str = numberArrayToString(numbers, sizeOfMessage);
-    
+
     fputs("Decriptat: ", fout);
     fputs(str, fout);
     fputs("\n", fout);
-    
+
     fclose(fout);
     free(message);
     free(primes);

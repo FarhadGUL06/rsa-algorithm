@@ -1,17 +1,15 @@
-#include <cstring>
 #include <pthread.h>
 
 #include "rsa.hpp"
 
 using namespace std;
 
-uint64_t public_key;
-uint64_t private_key;
-uint64_t n;
-
 size_t nr_threads;
+
 // initialize barrier
 pthread_barrier_t barrier;
+
+// Struct for payload
 struct thread_payload {
     size_t thread_id;
     uint64_t *numbers;
@@ -20,17 +18,6 @@ struct thread_payload {
     size_t size_str;
 };
 
-// All headers for functions from bellow
-
-uint64_t gcd(uint64_t a, uint64_t h);
-size_t primefiller(uint64_t *primes);
-uint64_t pickrandomprime(uint64_t *primes, size_t no_primes, int64_t *pos);
-void setkeys(uint64_t *primes, size_t no_primes);
-uint64_t encrypt(uint8_t message);
-uint8_t decrypt(uint64_t encrpyted_text);
-uint64_t *stringToNumbersArray(char *str);
-char *numberArrayToString(uint64_t *numbers, size_t size);
-
 /**
     Functie care ruleaza in paralel pentru a encripta
     un string
@@ -38,7 +25,7 @@ char *numberArrayToString(uint64_t *numbers, size_t size);
     @param arg argumentele functiei -> void*
 */
 void *thread_encryption(void *arg) {
-    thread_payload *info = (thread_payload *) arg;
+    thread_payload *info = (thread_payload *)arg;
     uint64_t *numbers = info->numbers;
     char *str = info->str;
     size_t size_str = info->size_str;
@@ -52,7 +39,8 @@ void *thread_encryption(void *arg) {
     // and then join them back together
     size_t work = size_str / nr_threads + 1;
 
-    //cout << "remaining: " << remaining << " work: " << work << " nr_threads: " << nr_threads << endl;
+    // cout << "remaining: " << remaining << " work: " << work << " nr_threads:
+    // " << nr_threads << endl;
 
     size_t start = thread_id * work;
     size_t end = (thread_id + 1) * work;
@@ -68,7 +56,7 @@ void *thread_encryption(void *arg) {
 }
 
 void *thread_decryption(void *arg) {
-    thread_payload *info = (thread_payload *) arg;
+    thread_payload *info = (thread_payload *)arg;
     uint64_t *numbers = info->numbers;
     char *str = info->str;
     size_t size_str = info->size_str;
@@ -90,7 +78,7 @@ void *thread_decryption(void *arg) {
     for (size_t i = start; i < end; ++i) {
         str[i] = decrypt(numbers[i]);
     }
-    
+
     pthread_exit(NULL);
 }
 
@@ -119,7 +107,7 @@ uint64_t gcd(uint64_t a, uint64_t h) {
     @param arg argumentele functiei -> void*
 */
 void *thread_primes(void *arg) {
-    thread_payload *info = (thread_payload *) arg;
+    thread_payload *info = (thread_payload *)arg;
     size_t thread_id = info->thread_id;
     uint8_t *ciur = info->ciur;
     uint64_t start, stop;
@@ -140,12 +128,13 @@ void *thread_primes(void *arg) {
 /**
     Functia care construieste ciurul lui Eratosthenes
 
-    @param primes care va referentia un array populat cu numere prime -> uint64_t
+    @param primes care va referentia un array populat cu numere prime ->
+   uint64_t
     @return size_prime – marimea array-ului de numere prime –> size_t
 */
 size_t primefiller(uint64_t *primes) {
     size_t size_prime = 0;
-    uint8_t *ciur = (uint8_t *) malloc(size_of_ciur * sizeof(uint8_t) + 1);
+    uint8_t *ciur = (uint8_t *)malloc(size_of_ciur * sizeof(uint8_t) + 1);
     memset(ciur, 1, size_of_ciur * sizeof(uint8_t) + 1);
 
     ciur[0] = false;
@@ -156,7 +145,7 @@ size_t primefiller(uint64_t *primes) {
             ciur[j] = false;
         }
     }
-    
+
     for (size_t i = 0; i < size_of_ciur; i++) {
         if (ciur[i]) {
             primes[size_prime] = i;
@@ -167,19 +156,19 @@ size_t primefiller(uint64_t *primes) {
     return size_prime;
 }
 
-
 /**
     Functie care alege un numar random prim
-    
+
     @param primes array-ul de numere prime -> uint64_t
     @param no_primes numarul de numere prime -> size_t
-    @param pos retine pozitia anterioara pentru a pastra diferenta intre prime1 si prime2 -> uint64_t
+    @param pos retine pozitia anterioara pentru a pastra diferenta intre prime1
+   si prime2 -> uint64_t
     @return primes[k] – numarul prim de la pozitia k -> uint64_t
 */
 uint64_t pickrandomprime(uint64_t *primes, size_t no_primes, uint64_t *pos) {
     uint64_t k = rand() % no_primes;
     while (k == *pos) {
-        k = rand() % no_primes;   
+        k = rand() % no_primes;
     }
     *pos = k;
     return primes[k];
@@ -236,7 +225,7 @@ void setkeys(uint64_t *primes, size_t no_primes) {
 uint64_t encrypt(uint8_t message) {
     uint64_t e = public_key;
     uint64_t result = 1;
-    uint64_t copy_message = (uint64_t) message;
+    uint64_t copy_message = (uint64_t)message;
     while (e > 0) {
         if (e & 1) {
             result = (result * copy_message) % n;
@@ -263,7 +252,7 @@ uint8_t decrypt(uint64_t encrpyted_text) {
         copy_private_key = copy_private_key >> 1;
         encrpyted_text = (encrpyted_text * encrpyted_text) % n;
     }
-    return (uint8_t) result % n;
+    return (uint8_t)result % n;
 }
 
 /**
@@ -284,13 +273,13 @@ uint64_t *stringToNumbersArray(char *str) {
         info[i].numbers = numbers;
         info[i].str = str;
         info[i].size_str = strlen(str);
-        
+
         pthread_create(&tid[i], NULL, thread_encryption, (void *)&info[i]);
     }
 
     for (size_t i = 0; i < nr_threads; i++) {
-		pthread_join(tid[i], NULL);
-	}
+        pthread_join(tid[i], NULL);
+    }
 
     /*for (size_t i = 0; i < strlen(str); ++i) {
         numbers[i] = encrypt((uint64_t)(str[i]));
@@ -325,20 +314,21 @@ char *numberArrayToString(uint64_t *numbers, size_t size) {
     }
 
     for (size_t i = 0; i < nr_threads; i++) {
-		pthread_join(tid[i], NULL);
-	}
+        pthread_join(tid[i], NULL);
+    }
 
     return str;
 }
 
 int main(int argc, char *argv[]) {
+    srand(seed);
     nr_threads = atoi(argv[1]);
     char *file_in = (char *)malloc(100 * sizeof(char));
     strcpy(file_in, input);
     strcat(file_in, argv[2]);
-    printf("File in: %s\n", file_in);
-    srand(time(NULL));
-    uint64_t *primes = (uint64_t*) malloc(size_of_ciur * sizeof(uint64_t) + 1);
+    // printf("File in: %s\n", file_in);
+
+    uint64_t *primes = (uint64_t *)malloc(size_of_ciur * sizeof(uint64_t) + 1);
     memset(primes, 0, size_of_ciur * sizeof(uint64_t) + 1);
 
     size_t no_primes = primefiller(primes);
@@ -351,13 +341,13 @@ int main(int argc, char *argv[]) {
 
     int sizeOfMessage = strlen(message);
     uint64_t *numbers = stringToNumbersArray(message);
-    
+
     char *file_out = (char *)malloc(100 * sizeof(char));
     strcpy(file_out, output);
     strcat(file_out, argv[2]);
-    printf("File out: %s\n", file_out);
+    // printf("File out: %s\n", file_out);
     FILE *fout = fopen(file_out, "w");
-    
+
     fputs("Criptat: ", fout);
     for (int i = 0; i < sizeOfMessage; i++) {
         fprintf(fout, "%lu ", numbers[i]);
@@ -365,7 +355,7 @@ int main(int argc, char *argv[]) {
     fputs("\n", fout);
 
     char *str = numberArrayToString(numbers, sizeOfMessage);
-    
+
     fputs("Decriptat: ", fout);
     fputs(str, fout);
     fputs("\n", fout);
