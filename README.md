@@ -74,6 +74,80 @@ implementarea data
 ```
 
 
+# Ce am paralelizat?
+
+In cadrul algoritmului RSA, am incercat sa paralelizam mai multe portiuni. 
+Am analizat ce anume am obtinut si am decis ce anume sa ramana paralelizat.
+Pentru a intelege solutia finala, e nevoie sa descriem putin pasii implementarii:
+
+1. Generarea vectorului de numere prime
+
+2. Calcularea cheilor publice si private
+
+3. Criptarea textului pe baza cheii publice
+
+4. Decriptarea textului pe baza cheii private
+
+Nivelul de paralelism cel mai evident care s-a dovedit a fi suficient de bun este 
+cel al paralelizarii textului la nivel de criptare si decriptare. Adica in loc sa 
+criptam si sa decriptam tot textul pe un singur thread / proces, am ales sa impartim 
+textul pe mai multe, in functie de implementare.
+
+Deci cel mai important nivel de paralelizare este cel al textului.
+
+Am paralelizat si generarea de numere prime incercand ciurul lui Atkin care putea 
+fi paralelizat, dar s-a dovedit a fi mai ineficient (masurat cu 
+time si perf din check.py) decat generarea seriala din cauza overhead-ului adus de 
+crearea de thread-uri sau procese pentru un task destul de simplu, paralelizarea avand 
+sens doar la generarea de numere extrem de foarte mari (primele 10 000 000 numere prime).
+
+Alt nivel de paralelism pe care l-am implementat in OpenMP a fost cel al citirii textului 
+de criptat simultan cu generarea de chei doar ca citirea se face foarte rapid chiar si la 
+testele mari, deci am decis sa pastram acest lucru doar pe varianta de OpenMP.
+
+Pentru a nu exagera, am decis sa nu ne gandim doar in directia paralelizarii fara sa optimizam 
+putin varianta seriala. Astfel, am lasat rsa_serial.cpp cu o implementare a criptarii si decriptarii 
+mai lente. Pentru solutiile finale, am folosit optimizarea descrisa mai jos (algoritmul de exponentiere 
+modulara) care a venit cu rezultate mult mai bune decat anticipasem.
+
+O mica evidentiere a optimizarii pentru primele 5 teste:
+
+| Input Size | Time Execution(s) - Serial   | Time Execution(s) - Serial Optimizat  |
+| :--------: | :--------------------------: | :-----------------------------------: |
+| 23         | 13.29                        | 1.32                                  |
+| 34         | 19.45                        | 1.32                                  |
+| 56         | 31.92                        | 1.32                                  |
+| 59         | 33.58                        | 1.32                                  |
+| 70         | 39.67                        | 1.33                                  |
+| 130        | 73.60                        | 1.32                                  |
+
+Am oprit compararea dupa 5 teste intrucat varianta seriala simpla tindea sa obtina timp extrem de mari.
+Pe varianta seriala optimizata se obtin valori la fel de bune ca pe implementarile paralelizate 
+pe testele mai mici (deoarece nu este necesara generarea de thread-uri / procese) pentru cazuri simple. 
+Solutiile paralelizate se scaleaza pe testele mari destul de mult.
+
+Un tabel cu toti timpii obtinuti pe varianta seriala optimizata pentru a fi comparati ulterior cu 
+solutiile paralele si timpii obtinuti pe implementarea OpenMP pentru o comparatie directa:
+
+| Input Size | Time Execution(s) - Serial Optimizat | Time Execution(s) - OpenMP |
+| :--------: | :----------------------------------: | :------------------------: |
+| 23         | 1.32                                 | 1.21                       |
+| 34         | 1.32                                 | 1.20                       |
+| 56         | 1.32                                 | 1.20                       |
+| 59         | 1.32                                 | 1.20                       |
+| 70         | 1.33                                 | 1.20                       |
+| 130        | 1.32                                 | 1.20                       |
+| 80000      | 1.44                                 | 1.21                       |
+| 160000     | 1.71                                 | 1.22                       |
+| 320000     | 3.72                                 | 1.24                       |
+| 640000     | 12.14                                | 1.27                       |
+| 1280000    | 43.92                                | 1.35                       |
+| 2560000    | 170.11                               | 1.47                       |
+| 40000000   | PREA MULT                            | 5.39                       |
+
+
+
+
 ## Generarea numerelor prime
 
 Pentru generarea numerelor prime, am considerat ca metode optime de implementare
