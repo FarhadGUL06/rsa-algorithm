@@ -74,7 +74,7 @@ implementarea data
 ```
 
 
-# Ce am paralelizat?
+## Ce am paralelizat?
 
 In cadrul algoritmului RSA, am incercat sa paralelizam mai multe portiuni. 
 Am analizat ce anume am obtinut si am decis ce anume sa ramana paralelizat.
