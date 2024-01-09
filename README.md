@@ -8,6 +8,27 @@
 ## Structura proiectului
 ```
 ├── check.py (checkerul folosit pentru rularea implementarilor)
+├── create_graphics.py (script folosit pentru generarea graficlor)
+├── graphics (graficele cu _zoomed au fost create pentru a evidentia diferenta 
+│   │          intre rulari cu timp de executie apropiati)
+│   ├── cluster (graficele generate pe cluster)
+│   │   ├── mpi_all.png
+│   │   ├── mpi_openmp_all.png
+│   │   ├── mpi_openmp_zoomed.png
+│   │   ├── mpi_zoomed.png
+│   │   ├── pthread_all.png
+│   │   ├── pthread_zoomed.png
+│   │   ├── the_best_all.png
+│   │   └── the_best_zoomed.png
+│   └── local (grafice generate local)
+│       ├── 2023-12-16_19-13-43_all.png
+│       ├── 2023-12-16_19-13-43_zoomed.png
+│       ├── 2023-12-16_19-17-35_all.png
+│       ├── 2023-12-16_19-17-35_zoomed.png
+│       ├── 2023-12-16_19-22-00_all.png
+│       ├── 2023-12-16_19-22-00_zoomed.png
+│       ├── 2023-12-16_19-28-05_all.png
+│       └── 2023-12-16_19-28-05_zoomed.png
 ├── Makefile
 ├── README.md
 ├── rsa_cuda_opt.cu
@@ -18,6 +39,11 @@
 ├── rsa_pthread.cpp
 ├── rsa_serial.cpp
 ├── rsa_serial_opt.cpp
+├── stats (Timpul de executie obtinut pe fiecare implementare pe toate testele)
+│   ├── 2023-12-16_19-13-43.pkl
+│   ├── 2023-12-16_19-17-35.pkl
+│   ├── 2023-12-16_19-22-00.pkl
+│   └── 2023-12-16_19-28-05.pkl
 ├── tests
 │   ├── input (fisierele pe care sunt testate implementarile)
 │   │   ├── test00.txt
@@ -30,9 +56,9 @@
 │   │   ├── test07.txt
 │   │   ├── test08.txt
 │   │   ├── test09.txt
-|   |   ├── ...
 │   │   └── test_huge.txt
 │   └── output (fisierele cu mesajul din fisierele de input sub forma criptata si decriptata)
+└── Weekly.md
 ```
 
 ## Descriere proiect
@@ -46,32 +72,6 @@ Pasii urmati au fost urmatorii:
 - am calculat totientul lui n (indicatorul lui Euler): phi(n) = (p - 1) * (q - 1)
 - am ales un numar e astfel incat e sa fie coprim cu phi(n) si
 1 < e < phi(n)
-
-## Rularea algoritmilor si a checkerului
-Algoritmii au fost rulati local si pe cluster folosind fisierul `check.py` 
-astfel: `python3 check.py test run_<implementare>` pentru a vedea timpul 
-scos de o anumita implementare pe teste de diferite marimi. Pentru a obtine
-graficele am folosit comanda: `python3 check.py stats`.
-
-Exemplu rulari:
-
-```
-python3 check.py test run_serial_opt
-python3 check.py test run_openmp
-python3 check.py test run_mpi
-python3 check.py test run_mpi_openmp
-python3 check.py test run_pthread
-python3 check.py test run_cuda_opt
-
-```
-
-Comanda:
-
-```
-python3 check.py test run_<implementare> -> analizeaza timpul pe 
-implementarea data
-
-```
 
 
 ## Ce am paralelizat?
@@ -147,6 +147,87 @@ solutiile paralele si timpii obtinuti pe implementarea OpenMP pentru o comparati
 
 
 
+## Rularea algoritmilor si a checkerului
+Algoritmii au fost rulati local si pe cluster folosind fisierul `check.py` 
+astfel: `python3 check.py test run_<implementare>` pentru a vedea timpul 
+scos de o anumita implementare pe teste de diferite marimi. Pentru a obtine
+graficele am folosit comanda: `python3 check.py stats`.
+
+Exemplu rulari:
+
+```
+python3 check.py test run_serial_opt
+
+python3 check.py perf run_serial_opt 0
+
+python3 check.py perf run_serial_opt 18
+
+```
+
+Toate comenzile disponibile:
+
+```
+python3 check.py test run_<implementare> -> analizeaza timpul pe 
+implementarea data
+
+python3 check.py stats -> genereaza statistici in pkl pentru toate 
+implementarile in care se retin timpul de executie
+
+python3 check.py perf run_<implementare> <numer_test> -> ruleaza perf 
+pe executabilul oferit si salveaza in ./perf/ rezultatele obtinute
+
+```
+
+## Rularea locala si pe cluster
+
+Pentru obtinerea timpilor de executie, am rulat local 
+dar si pe cluster (cu ajutorul documentatiei [1]), haswell cu 32 de procesoare
+pentru MPI, tot acolo variantele de pthread, openmp si 
+seriala. Pentru CUDA, am folosit xl, pe care am obtinut 
+timpi relativi apropiati de cei de pe local, avand 
+pe laptop un RTX 3050.
+
+## Profiling
+
+Profiling-ul a fost realizat pentru a determina functiile in care programul
+petrece cel mai mult timp si de a le optimiza pe acestea. 
+Am rulat perf [2] pentru a determina ce functii necesita optimizari. 
+
+Perf pe versiunea seriala neoptimizata:
+
+![Alt_text](perf/ss/serial_perf.png)
+
+Programul este CPU Bounded din cauza numarului mare de operatii la nivel
+de decriptare adica undeva la private_key iteratii per fiecare caracter, 
+iar aceasta valoare este destul de mare in generare, se vede in poza 
+de mai jos ca sta cel mai mult in decriptare pe un test banal (testul 0).
+
+![Alt_text](perf/ss/serial_perf_percentage.png)
+
+
+Perf pe versiunea seriala optimizata
+
+![Alt_text](perf/ss/serial_opt_perf_percentage.png)
+
+Dupa ce am introdus optimizarea explicata 
+(la capitolul Criptare si decriptare), 
+se poate observa ca pe un test mai greut (testul 18) timpul a 
+fost redus semnificativ (reiese din grafice) si timpul 
+petrecut in decriptare a fost redus la minim.
+
+
+Perf pe implementarea cu openmp
+
+![Alt_text](perf/ss/openmp_perf_percentage.png)
+
+Perf pe implementarea cu pthread
+
+![Alt_text](perf/ss/pthread_perf_percentage.png)
+
+Rezultatele celor 2 rulari in perf de mai sus sunt intuitive, 
+decriptarea fiind paralelizata, tot ramane sectiunea cea mai 
+puternic computationala din tot codul, doar ca, datorita paralelizarii, 
+aceasta are timpul de executie mult mai redus.
 
 ## Generarea numerelor prime
 
@@ -254,6 +335,54 @@ privata si functioneaza pe baza aceluiasi algoritm ca si functia de criptare.
 | 2560000    | 1.92                     | 1.47                       |
 | 40000000   | 5.29                     | 5.39                       |
 
+## Grafice
+
+Input size = numarul de caractere din testul curent, incremental 
+de la testul 0 la testul huge
+
+![mpi_all](graphics/cluster/mpi_all.png)
+
+![mpi_zoomed](graphics/cluster/mpi_zoomed.png)
+
+Dupa cum se poate observa, generarea mai multor procese nu aduce neaparat
+o imbunatatire, ba chiar incetineste intreg programul pentru
+teste mici. Se observa totusi cum tinde sa creasca
+timpul de executie doar pentru mpi rulat pe 4 procese 
+spre deosebire de cele de 8, 16 si 32 care tind
+sa fie asemanatoare in testul mare.
+
+![mpi_penmp_all](graphics/cluster/mpi_openmp_all.png)
+![mpi_openmp_zoomed](graphics/cluster/mpi_openmp_zoomed.png)
+
+Datorita imbunatatirilor paralelizarii cu openmp 
+a sectiunilor din fiecare proces, se observa cum 
+cresterea numarului de procese aduce chiar o incetinire
+din cauza overhead-ului creat prin generarea unui numar
+mai mare de procese.
+
+![pthread_all](graphics/cluster/pthread_all.png)
+![pthread_zoomed](graphics/cluster/pthread_zoomed.png)
+
+Datorita faptului ca generarea de thread-uri nu aduce 
+o intarziere mare in program, se vede ca cu cat 
+crestem numarul de thread-uri, cu atat scade timpul de 
+executie. Am testat cu cu 64 si 128 de thread-uri, rezultatele tind
+sa fie asemanatoare cu rularea pe 32 de thread-uri.
+
+![the_best_all](graphics/cluster/the_best_all.png)
+![the_best_zoomed](graphics/cluster/the_best_zoomed.png)
+
+Pentru acest grafic am ales sa punem cele mai bune 
+rezultate de la fiecare implementare. Se vede cum 
+varianta seriala tinde la un timp de executie foarte 
+mare pe testul cel mai mare in timp ce celelalte variante 
+obtin timpi relativi apropiati.
+Cele mai bune rezultate sunt intre mpi_openmp_4, pthread_32 si cuda_opt.
+
+![Alt text](graphics/local/2023-12-16_19-17-35_all.png)
+![Alt text](graphics/local/2023-12-16_19-17-35_zoomed.png)
+
+Aici sunt rezultate obtinute pe rularari locale.
 Pe teste foarte mari, cea mai eficienta varianta este OpenMP + MPI impartit 
 pe 8 procese.
 
@@ -273,15 +402,16 @@ Aceste rezultate sunt normale, ne asteptam sa vedem
 cele mai bune rezultate la implementarile mai complexe 
 abia la testele foarte mari, ceea ce s-a si intamplat.
 
-
 ## Bibliografie si referinte
 
-[1] https://www.geeksforgeeks.org/rsa-algorithm-cryptography/
+[1] https://infrastructure.pages.upb.ro/wiki/docs/grid/#conectarea-%C3%AEn-mod-interactiv
 
-[2] Harahap, M. K., & Khairina, N. (2019). The Comparison of Methods for Generating Prime Numbers between The Sieve of Eratosthenes, Atkins, and Sundaram.Sinkron : Jurnal Dan Penelitian Teknik Informatika, 3(2), 293-298. https://doi.org/10.33395/sinkron.v3i2.10129
+[2] https://perf.wiki.kernel.org/index.php/Main_Page
 
-[3] https://en.wikipedia.org/wiki/Modular_exponentiation
+[3] Harahap, M. K., & Khairina, N. (2019). The Comparison of Methods for Generating Prime Numbers between The Sieve of Eratosthenes, Atkins, and Sundaram.Sinkron : Jurnal Dan Penelitian Teknik Informatika, 3(2), 293-298. https://doi.org/10.33395/sinkron.v3i2.10129
 
-[4] https://math.stackexchange.com/questions/2382011/computational-complexity-of-modular-exponentiation-from-rosens-discrete-mathem
+[4] https://en.wikipedia.org/wiki/Modular_exponentiation
 
-[5] https://docs.nvidia.com/cuda/cuda-c-programming-guide/
+[5] https://math.stackexchange.com/questions/2382011/computational-complexity-of-modular-exponentiation-from-rosens-discrete-mathem
+
+[6] https://docs.nvidia.com/cuda/cuda-c-programming-guide/
