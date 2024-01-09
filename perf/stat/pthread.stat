@@ -1,0 +1,23 @@
+# started on Tue Dec 19 20:07:36 2023
+
+
+ Performance counter stats for './pthread 8 test18.txt':
+
+            403,50 msec task-clock                       #    1,249 CPUs utilized             
+               142      context-switches                 #  351,917 /sec                      
+                 1      cpu-migrations                   #    2,478 /sec                      
+             1.794      page-faults                      #    4,446 K/sec                     
+     1.562.974.453      cycles                           #    3,873 GHz                         (86,40%)
+         5.178.951      stalled-cycles-frontend          #    0,33% frontend cycles idle        (87,22%)
+        27.971.470      stalled-cycles-backend           #    1,79% backend cycles idle         (87,21%)
+     2.385.159.501      instructions                     #    1,53  insn per cycle            
+                                                  #    0,01  stalled cycles per insn     (84,07%)
+       454.956.620      branches                         #    1,128 G/sec                       (80,27%)
+         1.357.337      branch-misses                    #    0,30% of all branches             (78,54%)
+
+       0,323150035 seconds time elapsed
+
+       0,389442000 seconds user
+       0,014978000 seconds sys
+
+

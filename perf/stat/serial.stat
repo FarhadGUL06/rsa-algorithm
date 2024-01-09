@@ -1,0 +1,23 @@
+# started on Tue Dec 19 20:02:11 2023
+
+
+ Performance counter stats for './serial test00.txt':
+
+         13.060,53 msec task-clock                       #    0,996 CPUs utilized             
+             2.507      context-switches                 #  191,952 /sec                      
+                37      cpu-migrations                   #    2,833 /sec                      
+            78.322      page-faults                      #    5,997 K/sec                     
+    53.412.826.277      cycles                           #    4,090 GHz                         (83,34%)
+        40.926.918      stalled-cycles-frontend          #    0,08% frontend cycles idle        (83,29%)
+       112.451.038      stalled-cycles-backend           #    0,21% backend cycles idle         (83,38%)
+    39.709.201.388      instructions                     #    0,74  insn per cycle            
+                                                  #    0,00  stalled cycles per insn     (83,31%)
+     3.843.082.168      branches                         #  294,252 M/sec                       (83,37%)
+        14.410.150      branch-misses                    #    0,37% of all branches             (83,31%)
+
+      13,110488018 seconds time elapsed
+
+      12,879675000 seconds user
+       0,175831000 seconds sys
+
+

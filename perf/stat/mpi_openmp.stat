@@ -1,0 +1,23 @@
+# started on Tue Dec 19 20:08:34 2023
+
+
+ Performance counter stats for 'mpirun -np 8 ./mpi_openmp test18.txt':
+
+              2,90 msec task-clock                       #    0,774 CPUs utilized             
+                 0      context-switches                 #    0,000 /sec                      
+                 0      cpu-migrations                   #    0,000 /sec                      
+               264      page-faults                      #   91,040 K/sec                     
+        11.217.401      cycles                           #    3,868 GHz                         (93,85%)
+            10.433      stalled-cycles-frontend          #    0,09% frontend cycles idle      
+         1.899.234      stalled-cycles-backend           #   16,93% backend cycles idle       
+        10.835.021      instructions                     #    0,97  insn per cycle            
+                                                  #    0,18  stalled cycles per insn   
+         2.278.412      branches                         #  785,706 M/sec                     
+           345.420      branch-misses                    #   15,16% of all branches             (6,15%)
+
+       0,003748549 seconds time elapsed
+
+       0,000000000 seconds user
+       0,003809000 seconds sys
+
+

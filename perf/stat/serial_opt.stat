@@ -1,0 +1,23 @@
+# started on Tue Dec 19 20:00:07 2023
+
+
+ Performance counter stats for './serial_opt test19.txt':
+
+         20.139,22 msec task-clock                       #    0,998 CPUs utilized             
+             3.930      context-switches                 #  195,142 /sec                      
+                24      cpu-migrations                   #    1,192 /sec                      
+            78.947      page-faults                      #    3,920 K/sec                     
+    76.412.167.358      cycles                           #    3,794 GHz                         (83,29%)
+     1.784.825.721      stalled-cycles-frontend          #    2,34% frontend cycles idle        (83,35%)
+       146.450.973      stalled-cycles-backend           #    0,19% backend cycles idle         (83,37%)
+   131.854.512.814      instructions                     #    1,73  insn per cycle            
+                                                  #    0,01  stalled cycles per insn     (83,33%)
+    13.507.735.721      branches                         #  670,718 M/sec                       (83,31%)
+        17.710.526      branch-misses                    #    0,13% of all branches             (83,35%)
+
+      20,180712702 seconds time elapsed
+
+      19,938662000 seconds user
+       0,188176000 seconds sys
+
+
